@@ -4,8 +4,12 @@ import pytest
 import redis
 import redis.asyncio as aioredis
 
-from caching import reset_redis_config, setup_redis_config
-from caching.backends.redis import RedisBackend
+from caching import (
+    DEFAULT_KEY_PREFIX,
+    clear_never_die_registry,
+    reset_redis_config,
+    setup_redis_config,
+)
 
 
 def get_redis_url() -> str:
@@ -30,38 +34,44 @@ def async_redis_client():
     try:
         client = aioredis.from_url(get_redis_url())
         yield client
-    except Exception:
+    except redis.ConnectionError:
         pytest.skip("Redis server not available")
 
 
 @pytest.fixture(autouse=True)
 def reset_config():
-    """Reset Redis config before each test."""
+    """Reset Redis config and never_die registry before each test."""
+    clear_never_die_registry()
     reset_redis_config()
     yield
+    clear_never_die_registry()
     reset_redis_config()
 
 
 @pytest.fixture(autouse=True)
 def clear_redis_keys(sync_redis_client):
     """Clear all test cache keys before and after each test."""
+    pattern = f"{DEFAULT_KEY_PREFIX}:*"
+    # Clean up before test
+    for key in sync_redis_client.scan_iter(pattern):
+        sync_redis_client.delete(key)
     yield
-    # Clean up any cache keys created during test
-    for key in sync_redis_client.scan_iter("cache:*"):
+    # Clean up after test
+    for key in sync_redis_client.scan_iter(pattern):
         sync_redis_client.delete(key)
 
 
 @pytest.fixture
 def setup_sync_redis(sync_redis_client):
     """Setup Redis config with sync client only."""
-    setup_redis_config(sync_client=sync_redis_client, key_prefix="cache")
+    setup_redis_config(sync_client=sync_redis_client)
     return sync_redis_client
 
 
 @pytest.fixture
 def setup_async_redis(async_redis_client):
     """Setup Redis config with async client only."""
-    setup_redis_config(async_client=async_redis_client, key_prefix="cache")
+    setup_redis_config(async_client=async_redis_client)
     return async_redis_client
 
 
@@ -71,6 +81,5 @@ def setup_both_redis(sync_redis_client, async_redis_client):
     setup_redis_config(
         sync_client=sync_redis_client,
         async_client=async_redis_client,
-        key_prefix="cache",
     )
     return sync_redis_client, async_redis_client

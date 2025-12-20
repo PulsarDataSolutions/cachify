@@ -248,3 +248,16 @@ def register_never_die_function_redis(
         ignore_fields,
         backend,
     )
+
+
+def clear_never_die_registry() -> None:
+    """
+    Clear all entries from the never_die registry.
+
+    Useful for testing to prevent background threads from
+    accessing resources that have been cleaned up.
+    """
+    with _NEVER_DIE_LOCK:
+        _NEVER_DIE_REGISTRY.clear()
+        _NEVER_DIE_CACHE_THREADS.clear()
+        _NEVER_DIE_CACHE_FUTURES.clear()

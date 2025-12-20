@@ -9,7 +9,7 @@ def test_neverdie_sync_redis(setup_sync_redis):
     """Test never_die keeps returning cached values while refreshing in background."""
     call_count = 0
 
-    @redis_cache(ttl=1, never_die=True)
+    @redis_cache(ttl=0.1, never_die=True)
     def get_value(x: int) -> int:
         nonlocal call_count
         call_count += 1
@@ -20,18 +20,15 @@ def test_neverdie_sync_redis(setup_sync_redis):
     assert result1 == 10
     assert call_count == 1
 
-    # Wait for TTL to pass
-    time.sleep(1.5)
+    # Wait for multiple TTL cycles to allow background refreshes
+    time.sleep(0.5)
 
     # Should still return cached value (never_die)
     result2 = get_value(5)
     assert result2 == 10
 
-    # Wait for background refresh
-    time.sleep(0.5)
-
-    # Background thread should have refreshed
-    assert call_count >= 1  # At least initial call, possibly refresh
+    # Background thread should have refreshed multiple times
+    assert call_count > 2, f"Never-die should auto-refresh, counter: {call_count}"
 
 
 def test_neverdie_exception_redis(setup_sync_redis):

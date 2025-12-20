@@ -1,5 +1,7 @@
 import time
 
+import pytest
+
 from caching import redis_cache
 
 
@@ -164,9 +166,12 @@ def test_ignore_fields_redis(setup_sync_redis):
 
 def test_complex_objects_redis(setup_sync_redis):
     """Test caching complex objects in Redis."""
+    call_count = 0
 
     @redis_cache(ttl=60)
     def get_data() -> dict:
+        nonlocal call_count
+        call_count += 1
         return {"key": "value", "nested": {"a": 1, "b": [1, 2, 3]}}
 
     result1 = get_data()
@@ -174,3 +179,13 @@ def test_complex_objects_redis(setup_sync_redis):
 
     assert result1 == result2
     assert result1 == {"key": "value", "nested": {"a": 1, "b": [1, 2, 3]}}
+    assert call_count == 1  # Verify caching actually happened
+
+
+def test_cache_key_func_and_ignore_fields_mutual_exclusion_redis():
+    """Test that providing both cache_key_func and ignore_fields raises ValueError."""
+    with pytest.raises(ValueError, match="Either cache_key_func or ignore_fields"):
+
+        @redis_cache(ttl=60, cache_key_func=lambda args, kwargs: args[0], ignore_fields=("b",))
+        def func(a: int, b: int) -> int:
+            return a + b

@@ -1,19 +1,24 @@
 import asyncio
-import pytest
-from caching.cache import cache
-from itertools import count
 
-TTL = 1
-_global_counter = count()
+import pytest
+
+from caching.bucket import MemoryBackend
+from caching.cache import cache
+
+TTL = 0.1
 
 
 @pytest.fixture()
 def function_with_cache():
+    MemoryBackend.clear()  # Clear cache before each test
+    call_count = 0
 
     @cache(ttl=TTL)
     async def async_cached_function(arg=None) -> int:
         """Return a unique value on each real function call"""
-        return next(_global_counter)
+        nonlocal call_count
+        call_count += 1
+        return call_count
 
     return async_cached_function
 

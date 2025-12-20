@@ -52,7 +52,7 @@ def test_neverdie_exception():
         nonlocal neverdie_counter
         neverdie_counter += 1
         if neverdie_counter > 2:
-            raise Exception
+            raise RuntimeError("Simulated failure")
         return neverdie_counter
 
     # First call initializes the cache

@@ -9,6 +9,9 @@ if TYPE_CHECKING:
 
 OnErrorType = Literal["silent", "raise"]
 
+DEFAULT_KEY_PREFIX = "cache"
+DEFAULT_LOCK_TIMEOUT = 10
+
 
 @dataclass
 class RedisConfig:
@@ -27,8 +30,8 @@ _redis_config: RedisConfig | None = None
 def setup_redis_config(
     sync_client: Redis | None = None,
     async_client: AsyncRedis | None = None,
-    key_prefix: str = "cache",
-    lock_timeout: int = 10,
+    key_prefix: str = DEFAULT_KEY_PREFIX,
+    lock_timeout: int = DEFAULT_LOCK_TIMEOUT,
     on_error: OnErrorType = "silent",
 ) -> None:
     """

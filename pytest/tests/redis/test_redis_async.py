@@ -1,5 +1,4 @@
 import asyncio
-import time
 
 import pytest
 
@@ -123,6 +122,11 @@ async def test_skip_cache_async_redis(setup_async_redis):
     assert result2 == 10
     assert call_count == 2
 
+    # Normal call should still use cache
+    result3 = await get_value(5)
+    assert result3 == 10
+    assert call_count == 2
+
 
 @pytest.mark.asyncio
 async def test_separate_cache_keys_async_redis(setup_async_redis):
@@ -157,9 +161,12 @@ async def test_separate_cache_keys_async_redis(setup_async_redis):
 @pytest.mark.asyncio
 async def test_complex_objects_async_redis(setup_async_redis):
     """Test caching complex objects in Redis (async)."""
+    call_count = 0
 
     @redis_cache(ttl=60)
     async def get_data() -> dict:
+        nonlocal call_count
+        call_count += 1
         return {"key": "value", "nested": {"a": 1, "b": [1, 2, 3]}}
 
     result1 = await get_data()
@@ -167,3 +174,4 @@ async def test_complex_objects_async_redis(setup_async_redis):
 
     assert result1 == result2
     assert result1 == {"key": "value", "nested": {"a": 1, "b": [1, 2, 3]}}
+    assert call_count == 1  # Verify caching actually happened

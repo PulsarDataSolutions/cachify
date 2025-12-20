@@ -56,3 +56,15 @@ def test_get_config_before_setup_raises():
 
     with pytest.raises(RuntimeError, match="not configured"):
         get_redis_config()
+
+
+def test_unpicklable_object_raises_error(setup_sync_redis):
+    """Test that caching unpicklable objects raises a clear error."""
+    from caching import redis_cache
+
+    @redis_cache(ttl=60)
+    def get_lambda():
+        return lambda x: x * 2  # lambdas are not picklable
+
+    with pytest.raises(TypeError, match="cannot be pickled"):
+        get_lambda()
