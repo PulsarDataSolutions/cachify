@@ -1,5 +1,6 @@
-from contextlib import asynccontextmanager, contextmanager
+from redis.lock import Lock
 from typing import AsyncIterator, Iterator
+from contextlib import asynccontextmanager, contextmanager
 
 from caching.backends.redis_config import get_redis_config
 
@@ -30,7 +31,7 @@ class RedisLockManager:
             )
 
         lock_key = cls._make_lock_key(function_id, cache_key)
-        lock = config.sync_client.lock(
+        lock: Lock = config.sync_client.lock(
             lock_key,
             timeout=config.lock_timeout,
             blocking=True,
