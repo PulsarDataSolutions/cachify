@@ -74,41 +74,34 @@ class NeverDieCacheEntry:
 
 def _get_sync_lock(entry: NeverDieCacheEntry):
     """Get the appropriate sync lock for the entry's backend."""
-    from caching.backends.redis import RedisBackend
-
-    if entry.backend is not RedisBackend:
+    if entry.backend == MemoryBackend:
         return _SYNC_LOCKS[entry.id][entry.cache_key]
+    else:
+        # Redis backend - use RedisLockManager
+        from caching.backends.redis_lock import RedisLockManager
 
-    from caching.backends.redis_lock import RedisLockManager
-
-    return RedisLockManager.sync_lock(entry.id, entry.cache_key)
+        return RedisLockManager.sync_lock(entry.id, entry.cache_key)
 
 
 def _get_async_lock(entry: NeverDieCacheEntry):
     """Get the appropriate async lock for the entry's backend."""
-    from caching.backends.redis import RedisBackend
-
-    if entry.backend is not RedisBackend:
+    if entry.backend == MemoryBackend:
         return _ASYNC_LOCKS[entry.id][entry.cache_key]
+    else:
+        # Redis backend - use RedisLockManager
+        from caching.backends.redis_lock import RedisLockManager
 
-    from caching.backends.redis_lock import RedisLockManager
-
-    return RedisLockManager.async_lock(entry.id, entry.cache_key)
+        return RedisLockManager.async_lock(entry.id, entry.cache_key)
 
 
 def _run_sync_function_and_cache(entry: NeverDieCacheEntry):
     """Run a function and cache its result"""
-    try:
-        lock = _get_sync_lock(entry)
-    except RuntimeError:
-        # Backend no longer available (e.g., Redis was reset)
-        return
-
-    with lock:
+    with _get_sync_lock(entry):
         try:
             result = entry.function(*entry.args, **entry.kwargs)
             entry.backend.set(entry.id, entry.cache_key, result, None)
             entry.reset()
+
         except BaseException:
             entry.revive()
             logger.debug(
@@ -119,17 +112,12 @@ def _run_sync_function_and_cache(entry: NeverDieCacheEntry):
 
 async def _run_async_function_and_cache(entry: NeverDieCacheEntry):
     """Run a function and cache its result"""
-    try:
-        lock = _get_async_lock(entry)
-    except RuntimeError:
-        # Backend no longer available (e.g., Redis was reset)
-        return
-
-    async with lock:
+    async with _get_async_lock(entry):
         try:
             result = await entry.function(*entry.args, **entry.kwargs)
             await entry.backend.aset(entry.id, entry.cache_key, result, None)
             entry.reset()
+
         except BaseException:
             entry.revive()
             logger.debug(
@@ -219,11 +207,6 @@ def register_never_die_function(
     """Register a function for never_die cache refreshing (memory backend)"""
     is_async = inspect.iscoroutinefunction(function)
 
-    try:
-        loop = asyncio.get_running_loop() if is_async else None
-    except RuntimeError:
-        loop = None
-
     entry = NeverDieCacheEntry(
         function,
         ttl,
@@ -231,7 +214,7 @@ def register_never_die_function(
         kwargs,
         cache_key_func,
         ignore_fields,
-        loop,
+        asyncio.get_event_loop() if is_async else None,
         backend,
     )
 
