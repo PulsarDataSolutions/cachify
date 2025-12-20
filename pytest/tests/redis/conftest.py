@@ -1,5 +1,4 @@
 import os
-
 import pytest
 import redis
 import redis.asyncio as aioredis
@@ -49,7 +48,7 @@ def reset_config():
 
 
 @pytest.fixture(autouse=True)
-def clear_redis_keys(sync_redis_client):
+def clear_redis_keys(sync_redis_client: redis.Redis):
     """Clear all test cache keys before and after each test."""
     pattern = f"{DEFAULT_KEY_PREFIX}:*"
     # Clean up before test
@@ -62,21 +61,24 @@ def clear_redis_keys(sync_redis_client):
 
 
 @pytest.fixture
-def setup_sync_redis(sync_redis_client):
+def setup_sync_redis(sync_redis_client: redis.Redis):
     """Setup Redis config with sync client only."""
     setup_redis_config(sync_client=sync_redis_client)
     return sync_redis_client
 
 
 @pytest.fixture
-def setup_async_redis(async_redis_client):
+def setup_async_redis(async_redis_client: aioredis.Redis):
     """Setup Redis config with async client only."""
     setup_redis_config(async_client=async_redis_client)
     return async_redis_client
 
 
 @pytest.fixture
-def setup_both_redis(sync_redis_client, async_redis_client):
+def setup_both_redis(
+    sync_redis_client: redis.Redis,
+    async_redis_client: aioredis.Redis,
+):
     """Setup Redis config with both sync and async clients."""
     setup_redis_config(
         sync_client=sync_redis_client,

@@ -1,4 +1,5 @@
 import pytest
+import redis
 
 from caching import reset_redis_config, setup_redis_config
 
@@ -9,7 +10,7 @@ def test_setup_requires_at_least_one_client():
         setup_redis_config()
 
 
-def test_setup_cannot_be_called_twice(sync_redis_client):
+def test_setup_cannot_be_called_twice(sync_redis_client: redis.Redis):
     """Test that setup_redis_config raises if called twice without reset."""
     setup_redis_config(sync_client=sync_redis_client)
 
@@ -17,7 +18,7 @@ def test_setup_cannot_be_called_twice(sync_redis_client):
         setup_redis_config(sync_client=sync_redis_client)
 
 
-def test_reset_allows_reconfiguration(sync_redis_client):
+def test_reset_allows_reconfiguration(sync_redis_client: redis.Redis):
     """Test that reset_redis_config allows calling setup again."""
     setup_redis_config(sync_client=sync_redis_client, key_prefix="test1")
     reset_redis_config()
@@ -25,13 +26,13 @@ def test_reset_allows_reconfiguration(sync_redis_client):
     # Should not raise
 
 
-def test_invalid_on_error_value(sync_redis_client):
+def test_invalid_on_error_value(sync_redis_client: redis.Redis):
     """Test that invalid on_error value raises."""
     with pytest.raises(ValueError, match="on_error"):
         setup_redis_config(sync_client=sync_redis_client, on_error="invalid")  # type: ignore
 
 
-def test_config_values_are_stored(sync_redis_client):
+def test_config_values_are_stored(sync_redis_client: redis.Redis):
     """Test that config values are correctly stored."""
     from caching import get_redis_config
 
@@ -58,7 +59,7 @@ def test_get_config_before_setup_raises():
         get_redis_config()
 
 
-def test_unpicklable_object_raises_error(setup_sync_redis):
+def test_unpicklable_object_raises_error(setup_sync_redis: redis.Redis):
     """Test that caching unpicklable objects raises a clear error."""
     from caching import redis_cache
 

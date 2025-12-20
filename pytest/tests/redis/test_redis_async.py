@@ -1,12 +1,12 @@
 import asyncio
-
 import pytest
+import redis.asyncio
 
 from caching import redis_cache
 
 
 @pytest.mark.asyncio
-async def test_basic_async_redis_caching(setup_async_redis):
+async def test_basic_async_redis_caching(setup_async_redis: redis.asyncio.Redis):
     """Test that async function results are cached in Redis."""
     call_count = 0
 
@@ -28,7 +28,7 @@ async def test_basic_async_redis_caching(setup_async_redis):
 
 
 @pytest.mark.asyncio
-async def test_cache_expiration_async_redis(setup_async_redis):
+async def test_cache_expiration_async_redis(setup_async_redis: redis.asyncio.Redis):
     """Test that cached values expire after TTL (async)."""
     call_count = 0
 
@@ -53,7 +53,7 @@ async def test_cache_expiration_async_redis(setup_async_redis):
 
 
 @pytest.mark.asyncio
-async def test_concurrent_access_redis(setup_async_redis):
+async def test_concurrent_access_redis(setup_async_redis: redis.asyncio.Redis):
     """Test concurrent access to same cached value."""
     call_count = 0
 
@@ -77,7 +77,7 @@ async def test_concurrent_access_redis(setup_async_redis):
 
 
 @pytest.mark.asyncio
-async def test_different_arguments_async_redis(setup_async_redis):
+async def test_different_arguments_async_redis(setup_async_redis: redis.asyncio.Redis):
     """Test that different arguments create different cache entries (async)."""
     call_count = 0
 
@@ -102,7 +102,7 @@ async def test_different_arguments_async_redis(setup_async_redis):
 
 
 @pytest.mark.asyncio
-async def test_skip_cache_async_redis(setup_async_redis):
+async def test_skip_cache_async_redis(setup_async_redis: redis.asyncio.Redis):
     """Test skip_cache parameter bypasses cache read (async)."""
     call_count = 0
 
@@ -129,7 +129,7 @@ async def test_skip_cache_async_redis(setup_async_redis):
 
 
 @pytest.mark.asyncio
-async def test_separate_cache_keys_async_redis(setup_async_redis):
+async def test_separate_cache_keys_async_redis(setup_async_redis: redis.asyncio.Redis):
     """Test that different async functions have separate cache keys."""
     count_a = 0
     count_b = 0
@@ -159,7 +159,7 @@ async def test_separate_cache_keys_async_redis(setup_async_redis):
 
 
 @pytest.mark.asyncio
-async def test_complex_objects_async_redis(setup_async_redis):
+async def test_complex_objects_async_redis(setup_async_redis: redis.asyncio.Redis):
     """Test caching complex objects in Redis (async)."""
     call_count = 0
 

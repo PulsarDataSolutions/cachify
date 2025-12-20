@@ -1,8 +1,8 @@
+import pytest
 import asyncio
 from itertools import count
 from typing_extensions import Unpack
 
-import pytest
 from caching.cache import cache
 from caching.types import CacheKwargs
 

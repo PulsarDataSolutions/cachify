@@ -1,7 +1,7 @@
-import threading
 import time
-
 import pytest
+import threading
+from collections.abc import Callable
 
 from caching.bucket import MemoryBackend
 from caching.cache import cache
@@ -24,14 +24,14 @@ def function_with_cache():
     return sync_cached_function
 
 
-def test_basic_sync_caching(function_with_cache):
+def test_basic_sync_caching(function_with_cache: Callable[..., int]):
     result1 = function_with_cache()
     result2 = function_with_cache()
 
     assert result1 == result2
 
 
-def test_cache_expiration(function_with_cache):
+def test_cache_expiration(function_with_cache: Callable[..., int]):
     result1 = function_with_cache()
     time.sleep(TTL + 0.1)  # wait for cache expiration
     result2 = function_with_cache()
@@ -39,7 +39,7 @@ def test_cache_expiration(function_with_cache):
     assert result1 != result2
 
 
-def test_different_arguments(function_with_cache):
+def test_different_arguments(function_with_cache: Callable[..., int]):
     result1 = function_with_cache()
     result2 = function_with_cache("different")
 
@@ -50,7 +50,7 @@ def test_different_arguments(function_with_cache):
     assert result1 == result3
 
 
-def test_separate_cache_keys(function_with_cache):
+def test_separate_cache_keys(function_with_cache: Callable[..., int]):
     result1 = function_with_cache("key1")
     result2 = function_with_cache("key2")
 

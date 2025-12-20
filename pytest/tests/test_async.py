@@ -1,6 +1,7 @@
-import asyncio
-
 import pytest
+import asyncio
+from typing import Any
+from collections.abc import Callable, Coroutine
 
 from caching.bucket import MemoryBackend
 from caching.cache import cache
@@ -24,7 +25,9 @@ def function_with_cache():
 
 
 @pytest.mark.asyncio
-async def test_basic_async_caching(function_with_cache):
+async def test_basic_async_caching(
+    function_with_cache: Callable[..., Coroutine[Any, Any, int]],
+):
     result1 = await function_with_cache()
     result2 = await function_with_cache()
 
@@ -32,7 +35,9 @@ async def test_basic_async_caching(function_with_cache):
 
 
 @pytest.mark.asyncio
-async def test_cache_expiration(function_with_cache):
+async def test_cache_expiration(
+    function_with_cache: Callable[..., Coroutine[Any, Any, int]],
+):
     result1 = await function_with_cache()
     await asyncio.sleep(TTL + 0.1)  # wait for cache expiration
     result2 = await function_with_cache()
@@ -41,7 +46,9 @@ async def test_cache_expiration(function_with_cache):
 
 
 @pytest.mark.asyncio
-async def test_concurrent_access(function_with_cache):
+async def test_concurrent_access(
+    function_with_cache: Callable[..., Coroutine[Any, Any, int]],
+):
     tasks = [function_with_cache() for _ in range(5)]
     results = await asyncio.gather(*tasks)
 
@@ -50,7 +57,9 @@ async def test_concurrent_access(function_with_cache):
 
 
 @pytest.mark.asyncio
-async def test_different_arguments(function_with_cache):
+async def test_different_arguments(
+    function_with_cache: Callable[..., Coroutine[Any, Any, int]],
+):
     result1 = await function_with_cache()
     result2 = await function_with_cache("different")
 
@@ -62,7 +71,9 @@ async def test_different_arguments(function_with_cache):
 
 
 @pytest.mark.asyncio
-async def test_separate_cache_keys(function_with_cache):
+async def test_separate_cache_keys(
+    function_with_cache: Callable[..., Coroutine[Any, Any, int]],
+):
     result1 = await function_with_cache("key1")
     result2 = await function_with_cache("key2")
 

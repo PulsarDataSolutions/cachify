@@ -1,11 +1,11 @@
 import time
-
 import pytest
+import redis
 
 from caching import redis_cache
 
 
-def test_basic_sync_redis_caching(setup_sync_redis):
+def test_basic_sync_redis_caching(setup_sync_redis: redis.Redis):
     """Test that sync function results are cached in Redis."""
     call_count = 0
 
@@ -26,7 +26,7 @@ def test_basic_sync_redis_caching(setup_sync_redis):
     assert call_count == 1  # Function not called again
 
 
-def test_cache_expiration_redis(setup_sync_redis):
+def test_cache_expiration_redis(setup_sync_redis: redis.Redis):
     """Test that cached values expire after TTL."""
     call_count = 0
 
@@ -50,7 +50,7 @@ def test_cache_expiration_redis(setup_sync_redis):
     assert call_count == 2
 
 
-def test_different_arguments_redis(setup_sync_redis):
+def test_different_arguments_redis(setup_sync_redis: redis.Redis):
     """Test that different arguments create different cache entries."""
     call_count = 0
 
@@ -74,7 +74,7 @@ def test_different_arguments_redis(setup_sync_redis):
     assert call_count == 2
 
 
-def test_skip_cache_redis(setup_sync_redis):
+def test_skip_cache_redis(setup_sync_redis: redis.Redis):
     """Test skip_cache parameter bypasses cache read."""
     call_count = 0
 
@@ -100,7 +100,7 @@ def test_skip_cache_redis(setup_sync_redis):
     assert call_count == 2
 
 
-def test_separate_cache_keys_redis(setup_sync_redis):
+def test_separate_cache_keys_redis(setup_sync_redis: redis.Redis):
     """Test that different functions have separate cache keys."""
     count_a = 0
     count_b = 0
@@ -129,7 +129,7 @@ def test_separate_cache_keys_redis(setup_sync_redis):
     assert count_b == 1
 
 
-def test_cache_key_func_redis(setup_sync_redis):
+def test_cache_key_func_redis(setup_sync_redis: redis.Redis):
     """Test custom cache key function with Redis."""
 
     @redis_cache(ttl=60, cache_key_func=lambda args, kwargs: args[0])
@@ -144,7 +144,7 @@ def test_cache_key_func_redis(setup_sync_redis):
     assert result2 == 15  # Cached based on x=5
 
 
-def test_ignore_fields_redis(setup_sync_redis):
+def test_ignore_fields_redis(setup_sync_redis: redis.Redis):
     """Test ignore_fields parameter with Redis."""
     call_count = 0
 
@@ -164,7 +164,7 @@ def test_ignore_fields_redis(setup_sync_redis):
     assert call_count == 1
 
 
-def test_complex_objects_redis(setup_sync_redis):
+def test_complex_objects_redis(setup_sync_redis: redis.Redis):
     """Test caching complex objects in Redis."""
     call_count = 0
 

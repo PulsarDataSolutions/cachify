@@ -102,7 +102,7 @@ except Exception as exc:
 **❌ Wrong:**
 
 ```python
-aync def search_tweets(q: str)
+async def search_tweets(q: str)
 ```
 
 **✅ Right:**
