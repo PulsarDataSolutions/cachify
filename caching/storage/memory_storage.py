@@ -1,34 +1,14 @@
 import contextlib
 import time
-from dataclasses import dataclass, field
 from inspect import Signature
 from typing import Any
 
-from caching.types import CacheKeyFunction, Number
+from caching.types import CacheEntry, CacheKeyFunction, Number
 
 _CACHE_CLEAR_INTERVAL_SECONDS: int = 10
 
 
-@dataclass
-class MemoryCacheEntry:
-    result: Any
-    ttl: float | None
-
-    cached_at: float = field(init=False)
-    expires_at: float = field(init=False)
-
-    @classmethod
-    def time(cls) -> float:
-        return time.monotonic()
-
-    def __post_init__(self):
-        self.cached_at = self.time()
-        self.expires_at = 0 if self.ttl is None else self.cached_at + self.ttl
-
-    def is_expired(self) -> bool:
-        if self.ttl is None:
-            return False
-        return self.time() > self.expires_at
+class MemoryCacheEntry(CacheEntry): ...
 
 
 class MemoryStorage:

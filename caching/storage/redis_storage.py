@@ -1,35 +1,16 @@
 import pickle
 import time
-from dataclasses import dataclass, field
 from typing import Any
 
 from caching.redis.config import get_redis_config
 from caching.config import logger
-from caching.types import Number
+from caching.types import CacheEntry, Number
 
 
-@dataclass
-class RedisCacheEntry:
-    """Cache entry for Redis storage using Unix timestamps for portability."""
-
-    result: Any
-    ttl: float | None
-
-    cached_at: float = field(init=False)
-    expires_at: float = field(init=False)
-
+class RedisCacheEntry(CacheEntry):
     @classmethod
     def time(cls) -> float:
         return time.time()
-
-    def __post_init__(self):
-        self.cached_at = self.time()
-        self.expires_at = 0 if self.ttl is None else self.cached_at + self.ttl
-
-    def is_expired(self) -> bool:
-        if self.ttl is None:
-            return False
-        return self.time() > self.expires_at
 
 
 class RedisStorage:
@@ -78,24 +59,37 @@ class RedisStorage:
             )
 
     @classmethod
+    def _prepare_set(
+        cls, function_id: str, cache_key: str, result: Any, ttl: Number | None
+    ) -> tuple[str, bytes, int | None]:
+        """Prepare key, data, and expiry for set operations."""
+        key = cls._make_key(function_id, cache_key)
+        entry = RedisCacheEntry(result, ttl)
+        data = cls._serialize(entry)
+        expiry = int(ttl) + 1 if ttl is not None else None
+        return key, data, expiry
+
+    @classmethod
+    def _handle_error(cls, exc: Exception, operation: str) -> None:
+        """Handle Redis errors based on config."""
+        config = get_redis_config()
+        if config.on_error == "raise":
+            raise
+        logger.debug(f"Redis {operation} error (silent mode): {exc}")
+
+    @classmethod
     def set(cls, function_id: str, cache_key: str, result: Any, ttl: Number | None):
         """Store a result in Redis cache."""
         cls._require_sync_client()
         config = get_redis_config()
-
-        key = cls._make_key(function_id, cache_key)
-        entry = RedisCacheEntry(result, ttl)
-        data = cls._serialize(entry)
-
+        key, data, expiry = cls._prepare_set(function_id, cache_key, result, ttl)
         try:
-            if ttl is None:
+            if expiry is None:
                 config.sync_client.set(key, data)
             else:
-                config.sync_client.setex(key, int(ttl) + 1, data)
+                config.sync_client.setex(key, expiry, data)
         except Exception as exc:
-            if config.on_error == "raise":
-                raise
-            logger.debug(f"Redis set error (silent mode): {exc}")
+            cls._handle_error(exc, "set")
 
     @classmethod
     def get(cls, function_id: str, cache_key: str, skip_cache: bool) -> RedisCacheEntry | None:
@@ -106,7 +100,6 @@ class RedisStorage:
         cls._require_sync_client()
         config = get_redis_config()
         key = cls._make_key(function_id, cache_key)
-
         try:
             data = config.sync_client.get(key)
             if data is None:
@@ -117,9 +110,7 @@ class RedisStorage:
                 return None
             return entry
         except Exception as exc:
-            if config.on_error == "raise":
-                raise
-            logger.debug(f"Redis get error (silent mode): {exc}")
+            cls._handle_error(exc, "get")
             return None
 
     @classmethod
@@ -128,7 +119,6 @@ class RedisStorage:
         cls._require_sync_client()
         config = get_redis_config()
         key = cls._make_key(function_id, cache_key)
-
         try:
             data = config.sync_client.get(key)
             if data is None:
@@ -137,9 +127,7 @@ class RedisStorage:
             entry = cls._deserialize(bytes(data))  # type: ignore[arg-type]
             return entry.is_expired()
         except Exception as exc:
-            if config.on_error == "raise":
-                raise
-            logger.debug(f"Redis is_expired error (silent mode): {exc}")
+            cls._handle_error(exc, "is_expired")
             return True
 
     @classmethod
@@ -147,20 +135,14 @@ class RedisStorage:
         """Store a result in Redis cache (async)."""
         cls._require_async_client()
         config = get_redis_config()
-
-        key = cls._make_key(function_id, cache_key)
-        entry = RedisCacheEntry(result, ttl)
-        data = cls._serialize(entry)
-
+        key, data, expiry = cls._prepare_set(function_id, cache_key, result, ttl)
         try:
-            if ttl is None:
+            if expiry is None:
                 await config.async_client.set(key, data)
             else:
-                await config.async_client.setex(key, int(ttl) + 1, data)
+                await config.async_client.setex(key, expiry, data)
         except Exception as exc:
-            if config.on_error == "raise":
-                raise
-            logger.debug(f"Redis aset error (silent mode): {exc}")
+            cls._handle_error(exc, "aset")
 
     @classmethod
     async def aget(cls, function_id: str, cache_key: str, skip_cache: bool) -> RedisCacheEntry | None:
@@ -171,7 +153,6 @@ class RedisStorage:
         cls._require_async_client()
         config = get_redis_config()
         key = cls._make_key(function_id, cache_key)
-
         try:
             data = await config.async_client.get(key)
             if data is None:
@@ -182,9 +163,7 @@ class RedisStorage:
                 return None
             return entry
         except Exception as exc:
-            if config.on_error == "raise":
-                raise
-            logger.debug(f"Redis aget error (silent mode): {exc}")
+            cls._handle_error(exc, "aget")
             return None
 
     @classmethod
@@ -193,7 +172,6 @@ class RedisStorage:
         cls._require_async_client()
         config = get_redis_config()
         key = cls._make_key(function_id, cache_key)
-
         try:
             data = await config.async_client.get(key)
             if data is None:
@@ -202,7 +180,5 @@ class RedisStorage:
             entry = cls._deserialize(bytes(data))  # type: ignore[arg-type]
             return entry.is_expired()
         except Exception as exc:
-            if config.on_error == "raise":
-                raise
-            logger.debug(f"Redis ais_expired error (silent mode): {exc}")
+            cls._handle_error(exc, "ais_expired")
             return True

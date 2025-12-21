@@ -1,5 +1,6 @@
+import contextlib
 from contextlib import asynccontextmanager, contextmanager
-from typing import AsyncIterator, Iterator
+from typing import Any, AsyncIterator, Iterator
 
 from redis.lock import Lock
 
@@ -16,6 +17,22 @@ class RedisLockManager:
         return f"{config.key_prefix}:lock:{function_id}:{cache_key}"
 
     @classmethod
+    def _get_lock(cls, function_id: str, cache_key: str, is_async: bool) -> Any:
+        """Get client and create lock."""
+        config = get_redis_config()
+        client = config.async_client if is_async else config.sync_client
+        mode = "async" if is_async else "sync"
+
+        if client is None:
+            raise RuntimeError(
+                f"Redis {mode} client not configured. "
+                f"Provide {mode}_client in setup_redis_config() to use @redis_cache on {mode} functions."
+            )
+
+        lock_key = cls._make_lock_key(function_id, cache_key)
+        return client.lock(lock_key, timeout=config.lock_timeout, blocking=True, blocking_timeout=None)
+
+    @classmethod
     @contextmanager
     def sync_lock(cls, function_id: str, cache_key: str) -> Iterator[None]:
         """
@@ -23,33 +40,14 @@ class RedisLockManager:
 
         Uses Redis lock with blocking behavior - waits for lock holder to finish.
         """
-        config = get_redis_config()
-
-        if config.sync_client is None:
-            raise RuntimeError(
-                "Redis sync client not configured. "
-                "Provide sync_client in setup_redis_config() to use @redis_cache on sync functions."
-            )
-
-        lock_key = cls._make_lock_key(function_id, cache_key)
-        lock: Lock = config.sync_client.lock(
-            lock_key,
-            timeout=config.lock_timeout,
-            blocking=True,
-            blocking_timeout=None,
-        )
-
+        lock: Lock = cls._get_lock(function_id, cache_key, is_async=False)
         acquired = lock.acquire()
         try:
             yield
         finally:
-            if not acquired:
-                return
-
-            import contextlib
-
-            with contextlib.suppress(Exception):
-                lock.release()
+            if acquired:
+                with contextlib.suppress(Exception):
+                    lock.release()
 
     @classmethod
     @asynccontextmanager
@@ -59,30 +57,11 @@ class RedisLockManager:
 
         Uses Redis lock with blocking behavior - waits for lock holder to finish.
         """
-        config = get_redis_config()
-
-        if config.async_client is None:
-            raise RuntimeError(
-                "Redis async client not configured. "
-                "Provide async_client in setup_redis_config() to use @redis_cache on async functions."
-            )
-
-        lock_key = cls._make_lock_key(function_id, cache_key)
-        lock = config.async_client.lock(
-            lock_key,
-            timeout=config.lock_timeout,
-            blocking=True,
-            blocking_timeout=None,
-        )
-
+        lock = cls._get_lock(function_id, cache_key, is_async=True)
         acquired = await lock.acquire()
         try:
             yield
         finally:
-            if not acquired:
-                return
-
-            import contextlib
-
-            with contextlib.suppress(Exception):
-                await lock.release()
+            if acquired:
+                with contextlib.suppress(Exception):
+                    await lock.release()

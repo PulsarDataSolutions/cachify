@@ -8,12 +8,11 @@ from concurrent.futures import Future as ConcurrentFuture
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from caching._async.lock import _ASYNC_LOCKS
-from caching._sync.lock import _SYNC_LOCKS
 from caching.config import logger
 from caching.storage.memory_storage import MemoryStorage
 from caching.types import CacheKeyFunction, CacheStorage, Number
 from caching.utils.functions import get_function_id
+from caching.utils.locks import ASYNC_LOCKS, SYNC_LOCKS
 
 _NEVER_DIE_THREAD: threading.Thread | None = None
 _NEVER_DIE_LOCK: threading.Lock = threading.Lock()
@@ -79,7 +78,7 @@ class NeverDieCacheEntry:
 def _get_sync_lock(entry: NeverDieCacheEntry):
     """Get the appropriate sync lock for the entry's storage."""
     if entry.storage == MemoryStorage:
-        return _SYNC_LOCKS[entry.id][entry.cache_key]
+        return SYNC_LOCKS[entry.id][entry.cache_key]
 
     # Redis storage - use RedisLockManager
     from caching.redis.lock import RedisLockManager
@@ -90,7 +89,7 @@ def _get_sync_lock(entry: NeverDieCacheEntry):
 def _get_async_lock(entry: NeverDieCacheEntry):
     """Get the appropriate async lock for the entry's storage."""
     if entry.storage == MemoryStorage:
-        return _ASYNC_LOCKS[entry.id][entry.cache_key]
+        return ASYNC_LOCKS[entry.id][entry.cache_key]
 
     # Redis storage - use RedisLockManager
     from caching.redis.lock import RedisLockManager
@@ -227,27 +226,6 @@ def register_never_die_function(
             _NEVER_DIE_REGISTRY.append(entry)
 
     _start_never_die_thread()
-
-
-def register_never_die_function_redis(
-    function: Callable[..., Any],
-    ttl: Number,
-    args: tuple,
-    kwargs: dict,
-    cache_key_func: CacheKeyFunction | None,
-    ignore_fields: tuple[str, ...],
-    storage: type[CacheStorage],
-):
-    """Register a function for never_die cache refreshing (Redis storage)"""
-    register_never_die_function(
-        function,
-        ttl,
-        args,
-        kwargs,
-        cache_key_func,
-        ignore_fields,
-        storage,
-    )
 
 
 def clear_never_die_registry():

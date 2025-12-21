@@ -1,10 +1,35 @@
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
 from typing import Any, AsyncContextManager, Callable, ContextManager, Hashable, Protocol, TypeAlias, TypedDict, TypeVar
 
 Number: TypeAlias = int | float
 CacheKeyFunction: TypeAlias = Callable[[tuple, dict], Hashable]
 
 F = TypeVar("F", bound=Callable[..., Any])
+
+
+@dataclass
+class CacheEntry:
+    """Base cache entry with TTL and expiration tracking."""
+
+    result: Any
+    ttl: float | None
+
+    cached_at: float = field(init=False)
+    expires_at: float = field(init=False)
+
+    @classmethod
+    def time(cls) -> float:
+        return time.monotonic()
+
+    def __post_init__(self):
+        self.cached_at = self.time()
+        self.expires_at = 0 if self.ttl is None else self.cached_at + self.ttl
+
+    def is_expired(self) -> bool:
+        if self.ttl is None:
+            return False
+        return self.time() > self.expires_at
 
 
 @dataclass(frozen=True, slots=True)
