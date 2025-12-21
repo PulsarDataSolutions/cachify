@@ -32,7 +32,7 @@ class CacheStorage(Protocol):
         """Retrieve a cache entry. Returns None if not found, expired, or skip_cache is True."""
         ...
 
-    def set(self, function_id: str, cache_key: str, result: Any, ttl: Number | None) -> None:
+    def set(self, function_id: str, cache_key: str, result: Any, ttl: Number | None):
         """Store a result in the cache with optional TTL."""
         ...
 
@@ -44,7 +44,7 @@ class CacheStorage(Protocol):
         """Async version of get."""
         ...
 
-    async def aset(self, function_id: str, cache_key: str, result: Any, ttl: Number | None) -> None:
+    async def aset(self, function_id: str, cache_key: str, result: Any, ttl: Number | None):
         """Async version of set."""
         ...
 

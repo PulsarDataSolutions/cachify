@@ -48,7 +48,7 @@ class MemoryStorage:
             time.sleep(_CACHE_CLEAR_INTERVAL_SECONDS)
 
     @classmethod
-    def set(cls, function_id: str, cache_key: str, result: Any, ttl: Number | None) -> None:
+    def set(cls, function_id: str, cache_key: str, result: Any, ttl: Number | None):
         cls._CACHE[function_id, cache_key] = MemoryCacheEntry(result, ttl)
 
     @classmethod
@@ -67,7 +67,7 @@ class MemoryStorage:
         return True
 
     @classmethod
-    async def aset(cls, function_id: str, cache_key: str, result: Any, ttl: Number | None) -> None:
+    async def aset(cls, function_id: str, cache_key: str, result: Any, ttl: Number | None):
         cls.set(function_id, cache_key, result, ttl)
 
     @classmethod

@@ -58,7 +58,7 @@ class RedisStorage:
         return pickle.loads(data)
 
     @classmethod
-    def _require_sync_client(cls) -> None:
+    def _require_sync_client(cls):
         """Raise if sync client not configured."""
         config = get_redis_config()
         if config.sync_client is None:
@@ -68,7 +68,7 @@ class RedisStorage:
             )
 
     @classmethod
-    def _require_async_client(cls) -> None:
+    def _require_async_client(cls):
         """Raise if async client not configured."""
         config = get_redis_config()
         if config.async_client is None:
@@ -78,7 +78,7 @@ class RedisStorage:
             )
 
     @classmethod
-    def set(cls, function_id: str, cache_key: str, result: Any, ttl: Number | None) -> None:
+    def set(cls, function_id: str, cache_key: str, result: Any, ttl: Number | None):
         """Store a result in Redis cache."""
         cls._require_sync_client()
         config = get_redis_config()
@@ -143,7 +143,7 @@ class RedisStorage:
             return True
 
     @classmethod
-    async def aset(cls, function_id: str, cache_key: str, result: Any, ttl: Number | None) -> None:
+    async def aset(cls, function_id: str, cache_key: str, result: Any, ttl: Number | None):
         """Store a result in Redis cache (async)."""
         cls._require_async_client()
         config = get_redis_config()

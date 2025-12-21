@@ -207,7 +207,7 @@ def register_never_die_function(
     cache_key_func: CacheKeyFunction | None,
     ignore_fields: tuple[str, ...],
     storage: type[CacheStorage] = MemoryStorage,
-) -> None:
+):
     """Register a function for never_die cache refreshing (memory storage)"""
     is_async = inspect.iscoroutinefunction(function)
 
@@ -237,7 +237,7 @@ def register_never_die_function_redis(
     cache_key_func: CacheKeyFunction | None,
     ignore_fields: tuple[str, ...],
     storage: type[CacheStorage],
-) -> None:
+):
     """Register a function for never_die cache refreshing (Redis storage)"""
     register_never_die_function(
         function,
@@ -250,7 +250,7 @@ def register_never_die_function_redis(
     )
 
 
-def clear_never_die_registry() -> None:
+def clear_never_die_registry():
     """
     Clear all entries from the never_die registry.
 

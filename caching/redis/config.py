@@ -33,7 +33,7 @@ def setup_redis_config(
     key_prefix: str = DEFAULT_KEY_PREFIX,
     lock_timeout: int = DEFAULT_LOCK_TIMEOUT,
     on_error: OnErrorType = "silent",
-) -> None:
+):
     """
     Configure the Redis cache backend.
 
@@ -84,7 +84,7 @@ def get_redis_config() -> RedisConfig:
     return _redis_config
 
 
-def reset_redis_config() -> None:
+def reset_redis_config():
     """
     Reset the Redis configuration to allow reconfiguration.
 
