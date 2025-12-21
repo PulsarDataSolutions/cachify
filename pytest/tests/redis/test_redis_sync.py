@@ -30,7 +30,7 @@ def test_cache_expiration_redis(setup_sync_redis: redis.Redis):
     """Test that cached values expire after TTL."""
     call_count = 0
 
-    @redis_cache(ttl=1)  # 1 second TTL
+    @redis_cache(ttl=1)
     def get_value(x: int) -> int:
         nonlocal call_count
         call_count += 1

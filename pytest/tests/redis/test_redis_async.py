@@ -32,7 +32,7 @@ async def test_cache_expiration_async_redis(setup_async_redis: redis.asyncio.Red
     """Test that cached values expire after TTL (async)."""
     call_count = 0
 
-    @redis_cache(ttl=1)  # 1 second TTL
+    @redis_cache(ttl=1)
     async def get_value(x: int) -> int:
         nonlocal call_count
         call_count += 1
@@ -175,3 +175,50 @@ async def test_complex_objects_async_redis(setup_async_redis: redis.asyncio.Redi
     assert result1 == result2
     assert result1 == {"key": "value", "nested": {"a": 1, "b": [1, 2, 3]}}
     assert call_count == 1  # Verify caching actually happened
+
+
+@pytest.mark.asyncio
+async def test_cache_key_func_async_redis(setup_async_redis: redis.asyncio.Redis):
+    """Test custom cache key function with Redis (async)."""
+
+    @redis_cache(ttl=60, cache_key_func=lambda args, kwargs: args[0])
+    async def get_value(x: int, y: int) -> int:
+        return x + y
+
+    # Same x, different y should return cached result (because cache_key only uses x)
+    result1 = await get_value(5, 10)
+    assert result1 == 15
+
+    result2 = await get_value(5, 20)
+    assert result2 == 15  # Cached based on x=5
+
+
+@pytest.mark.asyncio
+async def test_ignore_fields_async_redis(setup_async_redis: redis.asyncio.Redis):
+    """Test ignore_fields parameter with Redis (async)."""
+    call_count = 0
+
+    @redis_cache(ttl=60, ignore_fields=("ignored",))
+    async def get_value(x: int, ignored: str) -> int:
+        nonlocal call_count
+        call_count += 1
+        return x * 2
+
+    result1 = await get_value(5, ignored="a")
+    assert result1 == 10
+    assert call_count == 1
+
+    # Different ignored value should still use cache
+    result2 = await get_value(5, ignored="b")
+    assert result2 == 10
+    assert call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_cache_key_func_and_ignore_fields_mutual_exclusion_async_redis():
+    """Test that providing both cache_key_func and ignore_fields raises ValueError (async)."""
+    with pytest.raises(ValueError, match="Either cache_key_func or ignore_fields"):
+
+        @redis_cache(ttl=60, cache_key_func=lambda args, kwargs: args[0], ignore_fields=("b",))
+        async def func(a: int, b: int) -> int:
+            return a + b

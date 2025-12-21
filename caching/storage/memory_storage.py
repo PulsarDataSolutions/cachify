@@ -114,10 +114,12 @@ class MemoryStorage:
 
             param = function_signature.parameters[name]
 
+            # Positional variable arguments can just be yielded like so
             if param.kind == param.VAR_POSITIONAL:
                 yield from value
                 continue
 
+            # Keyword variable arguments need to be unpacked from .items()
             if param.kind == param.VAR_KEYWORD:
                 yield from value.items()
                 continue
