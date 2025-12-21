@@ -8,10 +8,17 @@ from caching._sync import sync_decorator
 from caching._sync.lock import _SYNC_LOCKS
 from caching.bucket import CacheBucket, MemoryBackend
 from caching.features.never_die import register_never_die_function
-from caching.types import CacheKeyFunction, F, Number
+from caching.types import BackendConfig, CacheKeyFunction, F, Number
 
 _CACHE_CLEAR_THREAD: threading.Thread | None = None
 _CACHE_CLEAR_LOCK: threading.Lock = threading.Lock()
+
+_MEMORY_CONFIG = BackendConfig(
+    backend=MemoryBackend,
+    sync_lock=lambda fid, ckey: _SYNC_LOCKS[fid][ckey],
+    async_lock=lambda fid, ckey: _ASYNC_LOCKS[fid][ckey],
+    register_never_die=register_never_die_function,
+)
 
 
 def _start_cache_clear_thread():
@@ -60,9 +67,7 @@ def cache(
                 never_die=never_die,
                 cache_key_func=cache_key_func,
                 ignore_fields=ignore_fields,
-                backend=MemoryBackend,
-                lock_context=lambda fid, ckey: _ASYNC_LOCKS[fid][ckey],
-                register_never_die=register_never_die_function,
+                config=_MEMORY_CONFIG,
             )
         return sync_decorator(
             function=function,
@@ -70,9 +75,7 @@ def cache(
             never_die=never_die,
             cache_key_func=cache_key_func,
             ignore_fields=ignore_fields,
-            backend=MemoryBackend,
-            lock_context=lambda fid, ckey: _SYNC_LOCKS[fid][ckey],
-            register_never_die=register_never_die_function,
+            config=_MEMORY_CONFIG,
         )
 
     return decorator

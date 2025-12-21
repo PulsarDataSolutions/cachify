@@ -1,9 +1,20 @@
-from typing import Any, Callable, Hashable, Protocol, TypeAlias, TypedDict, TypeVar
+from dataclasses import dataclass
+from typing import Any, AsyncContextManager, Callable, ContextManager, Hashable, Protocol, TypeAlias, TypedDict, TypeVar
 
 Number: TypeAlias = int | float
 CacheKeyFunction: TypeAlias = Callable[[tuple, dict], Hashable]
 
 F = TypeVar("F", bound=Callable[..., Any])
+
+
+@dataclass(frozen=True, slots=True)
+class BackendConfig:
+    """Configuration for cache backend, grouping backend, lock, and never_die registration."""
+
+    backend: "CacheBackend"
+    sync_lock: Callable[[str, str], ContextManager]
+    async_lock: Callable[[str, str], AsyncContextManager]
+    register_never_die: Callable[..., None]
 
 
 class CacheEntryProtocol(Protocol):

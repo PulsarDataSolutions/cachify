@@ -4,7 +4,7 @@ from typing import Any
 from collections.abc import Callable, Coroutine
 
 from caching.bucket import MemoryBackend
-from caching.cache import cache
+from caching.memory_cache import cache
 
 TTL = 0.1
 

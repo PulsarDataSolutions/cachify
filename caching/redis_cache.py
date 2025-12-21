@@ -5,7 +5,15 @@ from caching._async import async_decorator
 from caching._sync import sync_decorator
 from caching.backends.redis import RedisBackend
 from caching.backends.redis_lock import RedisLockManager
-from caching.types import CacheKeyFunction, F, Number
+from caching.features.never_die import register_never_die_function_redis
+from caching.types import BackendConfig, CacheKeyFunction, F, Number
+
+_REDIS_CONFIG = BackendConfig(
+    backend=RedisBackend,
+    sync_lock=RedisLockManager.sync_lock,
+    async_lock=RedisLockManager.async_lock,
+    register_never_die=register_never_die_function_redis,
+)
 
 
 def redis_cache(
@@ -33,8 +41,6 @@ def redis_cache(
         - Makes subsequent calls wait for the first call to complete
         - Uses Redis for distributed caching across multiple processes/machines
     """
-    from caching.features.never_die import register_never_die_function_redis
-
     if cache_key_func and ignore_fields:
         raise ValueError("Either cache_key_func or ignore_fields can be provided, but not both")
 
@@ -46,9 +52,7 @@ def redis_cache(
                 never_die,
                 cache_key_func,
                 ignore_fields,
-                backend=RedisBackend,
-                lock_context=RedisLockManager.sync_lock,
-                register_never_die=register_never_die_function_redis,
+                config=_REDIS_CONFIG,
             )
 
         return async_decorator(
@@ -57,9 +61,7 @@ def redis_cache(
             never_die,
             cache_key_func,
             ignore_fields,
-            backend=RedisBackend,
-            lock_context=RedisLockManager.async_lock,
-            register_never_die=register_never_die_function_redis,
+            config=_REDIS_CONFIG,
         )
 
     return decorator

@@ -1,7 +1,7 @@
 import asyncio
 import pytest
 
-from caching.cache import cache
+from caching.memory_cache import cache
 
 TTL = 0.1
 

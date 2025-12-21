@@ -1,7 +1,7 @@
 import pytest
 from collections.abc import Callable
 
-from caching.cache import cache
+from caching.memory_cache import cache
 
 TTL = 1
 

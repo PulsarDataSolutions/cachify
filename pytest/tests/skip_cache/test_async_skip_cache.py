@@ -3,7 +3,7 @@ import asyncio
 from itertools import count
 from typing_extensions import Unpack
 
-from caching.cache import cache
+from caching.memory_cache import cache
 from caching.types import CacheKwargs
 
 TTL = 0.1
