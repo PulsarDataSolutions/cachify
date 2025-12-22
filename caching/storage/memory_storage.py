@@ -41,22 +41,12 @@ class MemoryStorage:
         return None
 
     @classmethod
-    def is_expired(cls, function_id: str, cache_key: str) -> bool:
-        if entry := cls._CACHE.get((function_id, cache_key)):
-            return entry.is_expired()
-        return True
-
-    @classmethod
     async def aset(cls, function_id: str, cache_key: str, result: Any, ttl: Number | None):
         cls.set(function_id, cache_key, result, ttl)
 
     @classmethod
     async def aget(cls, function_id: str, cache_key: str, skip_cache: bool) -> MemoryCacheEntry | None:
         return cls.get(function_id, cache_key, skip_cache)
-
-    @classmethod
-    async def ais_expired(cls, function_id: str, cache_key: str) -> bool:
-        return cls.is_expired(function_id, cache_key)
 
     @classmethod
     def clear(cls):

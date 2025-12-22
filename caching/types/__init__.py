@@ -29,6 +29,7 @@ class CacheEntry:
     def is_expired(self) -> bool:
         if self.ttl is None:
             return False
+
         return self.time() > self.expires_at
 
 
@@ -61,20 +62,12 @@ class CacheStorage(Protocol):
         """Store a result in the cache with optional TTL."""
         ...
 
-    def is_expired(self, function_id: str, cache_key: str) -> bool:
-        """Check if a cache entry is expired or doesn't exist."""
-        ...
-
     async def aget(self, function_id: str, cache_key: str, skip_cache: bool) -> CacheEntryProtocol | None:
         """Async version of get."""
         ...
 
     async def aset(self, function_id: str, cache_key: str, result: Any, ttl: Number | None):
         """Async version of set."""
-        ...
-
-    async def ais_expired(self, function_id: str, cache_key: str) -> bool:
-        """Async version of is_expired."""
         ...
 
 
