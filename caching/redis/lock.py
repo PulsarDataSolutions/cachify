@@ -1,8 +1,8 @@
 import contextlib
 from contextlib import asynccontextmanager, contextmanager
-from typing import Any, AsyncIterator, Iterator
-
+from typing import AsyncIterator, Iterator, Literal, overload
 from redis.lock import Lock
+from redis.asyncio.lock import Lock as AsyncLock
 
 from caching.redis.config import get_redis_config
 
@@ -16,8 +16,16 @@ class RedisLockManager:
         config = get_redis_config()
         return f"{config.key_prefix}:lock:{function_id}:{cache_key}"
 
+    @overload
     @classmethod
-    def _get_lock(cls, function_id: str, cache_key: str, is_async: bool) -> Any:
+    def _get_lock(cls, function_id: str, cache_key: str, is_async: Literal[True]) -> AsyncLock: ...
+
+    @overload
+    @classmethod
+    def _get_lock(cls, function_id: str, cache_key: str, is_async: Literal[False]) -> Lock: ...
+
+    @classmethod
+    def _get_lock(cls, function_id: str, cache_key: str, is_async: bool) -> Lock | AsyncLock:
         """Get client and create lock."""
         config = get_redis_config()
         client = config.get_client(is_async)
@@ -38,9 +46,10 @@ class RedisLockManager:
         try:
             yield
         finally:
-            if acquired:
-                with contextlib.suppress(Exception):
-                    lock.release()
+            if not acquired:
+                return
+            with contextlib.suppress(Exception):
+                lock.release()
 
     @classmethod
     @asynccontextmanager
@@ -55,6 +64,7 @@ class RedisLockManager:
         try:
             yield
         finally:
-            if acquired:
-                with contextlib.suppress(Exception):
-                    await lock.release()
+            if not acquired:
+                return
+            with contextlib.suppress(Exception):
+                await lock.release()
