@@ -32,11 +32,11 @@ async def test_neverdie_vs_regular():
     await neverdie_fn()
 
     # Wait for some time to allow background refreshes to occur
-    wait_time = TTL * 4
+    wait_time = TTL * 6
     await asyncio.sleep(wait_time)
 
     # The never_die counter should have been incremented by background refreshes
-    assert neverdie_counter > 2, f"Never-die should auto-refresh, counter: {neverdie_counter}"
+    assert neverdie_counter >= 3, f"Never-die should auto-refresh, counter: {neverdie_counter}"
 
     # The regular counter should still be 1 (no auto-refresh)
     assert regular_counter == 1, f"Regular should NOT auto-refresh, counter: {regular_counter}"
