@@ -1,6 +1,7 @@
 import hashlib
+import inspect
 import pickle
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from inspect import Signature
 from typing import Any
 
@@ -12,7 +13,7 @@ def _cache_key_fingerprint(value: object) -> str:
     return hashlib.blake2b(payload, digest_size=16).hexdigest()
 
 
-def iter_arguments(
+def _iter_arguments(
     function_signature: Signature,
     args: tuple,
     kwargs: dict,
@@ -41,14 +42,15 @@ def iter_arguments(
 
 
 def create_cache_key(
-    function_signature: Signature,
+    function: Callable[..., Any],
     cache_key_func: CacheKeyFunction | None,
     ignore_fields: tuple[str, ...],
     args: tuple,
     kwargs: dict,
 ) -> str:
     if not cache_key_func:
-        items = tuple(iter_arguments(function_signature, args, kwargs, ignore_fields))
+        function_signature = inspect.signature(function)
+        items = tuple(_iter_arguments(function_signature, args, kwargs, ignore_fields))
         return _cache_key_fingerprint(items)
 
     cache_key = cache_key_func(args, kwargs)

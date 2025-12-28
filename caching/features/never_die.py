@@ -45,9 +45,8 @@ class NeverDieCacheEntry:
 
     @functools.cached_property
     def cache_key(self) -> str:
-        function_signature = inspect.signature(self.function)
         return create_cache_key(
-            function_signature,
+            self.function,
             self.cache_key_func,
             self.ignore_fields,
             self.args,

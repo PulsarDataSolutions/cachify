@@ -17,12 +17,11 @@ def _async_decorator(
     config: CacheConfig,
 ) -> F:
     function_id = get_function_id(function)
-    function_signature = inspect.signature(function)
 
     @functools.wraps(function)
     async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
         skip_cache = kwargs.pop("skip_cache", False)
-        cache_key = create_cache_key(function_signature, cache_key_func, ignore_fields, args, kwargs)
+        cache_key = create_cache_key(function, cache_key_func, ignore_fields, args, kwargs)
 
         if never_die:
             register_never_die_function(function, ttl, args, kwargs, cache_key_func, ignore_fields, config)
@@ -50,12 +49,11 @@ def _sync_decorator(
     config: CacheConfig,
 ) -> F:
     function_id = get_function_id(function)
-    function_signature = inspect.signature(function)
 
     @functools.wraps(function)
     def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
         skip_cache = kwargs.pop("skip_cache", False)
-        cache_key = create_cache_key(function_signature, cache_key_func, ignore_fields, args, kwargs)
+        cache_key = create_cache_key(function, cache_key_func, ignore_fields, args, kwargs)
 
         if never_die:
             register_never_die_function(function, ttl, args, kwargs, cache_key_func, ignore_fields, config)
