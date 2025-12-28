@@ -38,8 +38,8 @@ class CacheConfig:
     """Configuration for cache, grouping storage, lock, and never_die registration."""
 
     storage: "CacheStorage"
-    sync_lock: Callable[[str, str], ContextManager]
-    async_lock: Callable[[str, str], AsyncContextManager]
+    sync_lock: Callable[[str], ContextManager]
+    async_lock: Callable[[str], AsyncContextManager]
 
 
 class CacheEntryProtocol(Protocol):
@@ -53,19 +53,19 @@ class CacheEntryProtocol(Protocol):
 class CacheStorage(Protocol):
     """Protocol defining the interface for cache storage."""
 
-    def get(self, function_id: str, cache_key: str, skip_cache: bool) -> CacheEntryProtocol | None:
+    def get(self, cache_key: str, skip_cache: bool) -> CacheEntryProtocol | None:
         """Retrieve a cache entry. Returns None if not found, expired, or skip_cache is True."""
         ...
 
-    def set(self, function_id: str, cache_key: str, result: Any, ttl: Number | None):
+    def set(self, cache_key: str, result: Any, ttl: Number | None):
         """Store a result in the cache with optional TTL."""
         ...
 
-    async def aget(self, function_id: str, cache_key: str, skip_cache: bool) -> CacheEntryProtocol | None:
+    async def aget(self, cache_key: str, skip_cache: bool) -> CacheEntryProtocol | None:
         """Async version of get."""
         ...
 
-    async def aset(self, function_id: str, cache_key: str, result: Any, ttl: Number | None):
+    async def aset(self, cache_key: str, result: Any, ttl: Number | None):
         """Async version of set."""
         ...
 

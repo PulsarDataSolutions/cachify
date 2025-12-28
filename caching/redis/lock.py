@@ -158,25 +158,25 @@ class RedisLockManager:
     """Distributed lock manager using Redis locks."""
 
     @classmethod
-    def _make_lock_key(cls, function_id: str, cache_key: str) -> str:
+    def _make_lock_key(cls, cache_key: str) -> str:
         """Create a Redis lock key."""
         config = get_redis_config()
-        return f"{config.key_prefix}:lock:{function_id}:{cache_key}"
+        return f"{config.key_prefix}:lock:{cache_key}"
 
     @overload
     @classmethod
-    def _get_lock(cls, function_id: str, cache_key: str, is_async: Literal[True]) -> AsyncLock: ...
+    def _get_lock(cls, cache_key: str, is_async: Literal[True]) -> AsyncLock: ...
 
     @overload
     @classmethod
-    def _get_lock(cls, function_id: str, cache_key: str, is_async: Literal[False]) -> Lock: ...
+    def _get_lock(cls, cache_key: str, is_async: Literal[False]) -> Lock: ...
 
     @classmethod
-    def _get_lock(cls, function_id: str, cache_key: str, is_async: bool) -> Lock | AsyncLock:
+    def _get_lock(cls, cache_key: str, is_async: bool) -> Lock | AsyncLock:
         """Get client and create lock."""
         config = get_redis_config()
         client = config.get_client(is_async)
-        lock_key = cls._make_lock_key(function_id, cache_key)
+        lock_key = cls._make_lock_key(cache_key)
         return client.lock(
             lock_key,
             timeout=config.lock_timeout,
@@ -187,7 +187,7 @@ class RedisLockManager:
 
     @classmethod
     @contextmanager
-    def sync_lock(cls, function_id: str, cache_key: str) -> Iterator[None]:
+    def sync_lock(cls, cache_key: str) -> Iterator[None]:
         """
         Acquire a distributed lock for sync operations.
 
@@ -195,7 +195,7 @@ class RedisLockManager:
         Lock is automatically extended via heartbeat to prevent expiration during long operations.
         """
         config = get_redis_config()
-        lock = cls._get_lock(function_id, cache_key, is_async=False)
+        lock = cls._get_lock(cache_key, is_async=False)
         acquired = False
 
         try:
@@ -213,7 +213,7 @@ class RedisLockManager:
 
     @classmethod
     @asynccontextmanager
-    async def async_lock(cls, function_id: str, cache_key: str) -> AsyncIterator[None]:
+    async def async_lock(cls, cache_key: str) -> AsyncIterator[None]:
         """
         Acquire a distributed lock for async operations.
 
@@ -221,7 +221,7 @@ class RedisLockManager:
         Lock is automatically extended via heartbeat to prevent expiration during long operations.
         """
         config = get_redis_config()
-        lock = cls._get_lock(function_id, cache_key, is_async=True)
+        lock = cls._get_lock(cache_key, is_async=True)
         acquired = False
 
         try:

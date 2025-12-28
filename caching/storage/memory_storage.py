@@ -13,7 +13,7 @@ class MemoryCacheEntry(CacheEntry): ...
 class MemoryStorage:
     """In-memory cache storage implementing CacheStorage protocol."""
 
-    _CACHE: dict[tuple[str, str], MemoryCacheEntry] = {}
+    _CACHE: dict[str, MemoryCacheEntry] = {}
 
     @classmethod
     def clear_expired_cached_items(cls):
@@ -27,25 +27,25 @@ class MemoryStorage:
             time.sleep(_CACHE_CLEAR_INTERVAL_SECONDS)
 
     @classmethod
-    def set(cls, function_id: str, cache_key: str, result: Any, ttl: Number | None):
-        cls._CACHE[function_id, cache_key] = MemoryCacheEntry(result, ttl)
+    def set(cls, cache_key: str, result: Any, ttl: Number | None):
+        cls._CACHE[cache_key] = MemoryCacheEntry(result, ttl)
 
     @classmethod
-    def get(cls, function_id: str, cache_key: str, skip_cache: bool) -> MemoryCacheEntry | None:
+    def get(cls, cache_key: str, skip_cache: bool) -> MemoryCacheEntry | None:
         if skip_cache:
             return None
-        if entry := cls._CACHE.get((function_id, cache_key)):
+        if entry := cls._CACHE.get(cache_key):
             if not entry.is_expired():
                 return entry
         return None
 
     @classmethod
-    async def aset(cls, function_id: str, cache_key: str, result: Any, ttl: Number | None):
-        cls.set(function_id, cache_key, result, ttl)
+    async def aset(cls, cache_key: str, result: Any, ttl: Number | None):
+        cls.set(cache_key, result, ttl)
 
     @classmethod
-    async def aget(cls, function_id: str, cache_key: str, skip_cache: bool) -> MemoryCacheEntry | None:
-        return cls.get(function_id, cache_key, skip_cache)
+    async def aget(cls, cache_key: str, skip_cache: bool) -> MemoryCacheEntry | None:
+        return cls.get(cache_key, skip_cache)
 
     @classmethod
     def clear(cls):

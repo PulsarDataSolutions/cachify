@@ -11,7 +11,6 @@ from typing import Any, Callable
 from caching.config import logger
 from caching.types import CacheConfig, CacheKeyFunction, Number
 from caching.utils.arguments import create_cache_key
-from caching.utils.functions import get_function_id
 
 _NEVER_DIE_THREAD: threading.Thread | None = None
 _NEVER_DIE_LOCK: threading.Lock = threading.Lock()
@@ -40,10 +39,6 @@ class NeverDieCacheEntry:
         self._expires_at: float = time.monotonic() + self.ttl
 
     @functools.cached_property
-    def id(self) -> str:
-        return get_function_id(self.function)
-
-    @functools.cached_property
     def cache_key(self) -> str:
         return create_cache_key(
             self.function,
@@ -56,10 +51,10 @@ class NeverDieCacheEntry:
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, NeverDieCacheEntry):
             return False
-        return self.id == other.id and self.cache_key == other.cache_key
+        return self.cache_key == other.cache_key
 
     def __hash__(self) -> int:
-        return hash((self.id, self.cache_key))
+        return hash(self.cache_key)
 
     def is_expired(self) -> bool:
         return time.monotonic() > self._expires_at
@@ -75,10 +70,10 @@ class NeverDieCacheEntry:
 
 def _run_sync_function_and_cache(entry: NeverDieCacheEntry):
     """Run a function and cache its result"""
-    with entry.config.sync_lock(entry.id, entry.cache_key):
+    with entry.config.sync_lock(entry.cache_key):
         try:
             result = entry.function(*entry.args, **entry.kwargs)
-            entry.config.storage.set(entry.id, entry.cache_key, result, None)
+            entry.config.storage.set(entry.cache_key, result, None)
             entry.reset()
         except BaseException:
             entry.revive()
@@ -90,10 +85,10 @@ def _run_sync_function_and_cache(entry: NeverDieCacheEntry):
 
 async def _run_async_function_and_cache(entry: NeverDieCacheEntry):
     """Run a function and cache its result"""
-    async with entry.config.async_lock(entry.id, entry.cache_key):
+    async with entry.config.async_lock(entry.cache_key):
         try:
             result = await entry.function(*entry.args, **entry.kwargs)
-            await entry.config.storage.aset(entry.id, entry.cache_key, result, None)
+            await entry.config.storage.aset(entry.cache_key, result, None)
             entry.reset()
         except BaseException:
             entry.revive()

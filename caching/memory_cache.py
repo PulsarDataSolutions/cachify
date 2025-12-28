@@ -11,8 +11,8 @@ _CACHE_CLEAR_LOCK: threading.Lock = threading.Lock()
 
 _MEMORY_CONFIG = CacheConfig(
     storage=MemoryStorage,
-    sync_lock=lambda fid, ckey: SYNC_LOCKS[fid][ckey],
-    async_lock=lambda fid, ckey: ASYNC_LOCKS[fid][ckey],
+    sync_lock=lambda cache_key: SYNC_LOCKS[cache_key],
+    async_lock=lambda cache_key: ASYNC_LOCKS[cache_key],
 )
 
 

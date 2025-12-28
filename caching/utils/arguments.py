@@ -6,6 +6,7 @@ from inspect import Signature
 from typing import Any
 
 from caching.types import CacheKeyFunction
+from caching.utils.functions import get_function_id
 
 
 def _cache_key_fingerprint(value: object) -> str:
@@ -48,14 +49,16 @@ def create_cache_key(
     args: tuple,
     kwargs: dict,
 ) -> str:
+    function_id = get_function_id(function)
+
     if not cache_key_func:
         function_signature = inspect.signature(function)
         items = tuple(_iter_arguments(function_signature, args, kwargs, ignore_fields))
-        return _cache_key_fingerprint(items)
+        return f"{function_id}:{_cache_key_fingerprint(items)}"
 
     cache_key = cache_key_func(args, kwargs)
     try:
-        return _cache_key_fingerprint(cache_key)
+        return f"{function_id}:{_cache_key_fingerprint(cache_key)}"
     except TypeError as exc:
         raise ValueError(
             "Cache key function must return a hashable cache key - be careful with mutable types (list, dict, set) and non built-in types"

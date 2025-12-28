@@ -17,10 +17,10 @@ class RedisStorage:
     """Redis cache storage implementing CacheStorage protocol."""
 
     @classmethod
-    def _make_key(cls, function_id: str, cache_key: str) -> str:
-        """Create a Redis key from function_id and cache_key."""
+    def _make_key(cls, cache_key: str) -> str:
+        """Create a Redis key from cache_key."""
         config = get_redis_config()
-        return f"{config.key_prefix}:{function_id}:{cache_key}"
+        return f"{config.key_prefix}:{cache_key}"
 
     @classmethod
     def _serialize(cls, entry: RedisCacheEntry) -> bytes:
@@ -40,18 +40,16 @@ class RedisStorage:
 
     @overload
     @classmethod
-    def _prepare_set(cls, function_id: str, cache_key: str, result: Any, ttl: None) -> tuple[str, bytes, None]: ...
+    def _prepare_set(cls, cache_key: str, result: Any, ttl: None) -> tuple[str, bytes, None]: ...
 
     @overload
     @classmethod
-    def _prepare_set(cls, function_id: str, cache_key: str, result: Any, ttl: Number) -> tuple[str, bytes, int]: ...
+    def _prepare_set(cls, cache_key: str, result: Any, ttl: Number) -> tuple[str, bytes, int]: ...
 
     @classmethod
-    def _prepare_set(
-        cls, function_id: str, cache_key: str, result: Any, ttl: Number | None
-    ) -> tuple[str, bytes, int | None]:
+    def _prepare_set(cls, cache_key: str, result: Any, ttl: Number | None) -> tuple[str, bytes, int | None]:
         """Prepare key, data, and expiry in milliseconds for set operations."""
-        key = cls._make_key(function_id, cache_key)
+        key = cls._make_key(cache_key)
         data = cls._serialize(RedisCacheEntry(result, ttl))
         if ttl is None:
             return key, data, None
@@ -80,11 +78,11 @@ class RedisStorage:
         return entry
 
     @classmethod
-    def set(cls, function_id: str, cache_key: str, result: Any, ttl: Number | None):
+    def set(cls, cache_key: str, result: Any, ttl: Number | None):
         """Store a result in Redis cache."""
         config = get_redis_config()
         client = config.get_client(is_async=False)
-        key, data, expiry_ms = cls._prepare_set(function_id, cache_key, result, ttl)
+        key, data, expiry_ms = cls._prepare_set(cache_key, result, ttl)
         try:
             if expiry_ms is None:
                 client.set(key, data)
@@ -95,14 +93,14 @@ class RedisStorage:
             cls._handle_error(exc, "set")
 
     @classmethod
-    def get(cls, function_id: str, cache_key: str, skip_cache: bool) -> RedisCacheEntry | None:
+    def get(cls, cache_key: str, skip_cache: bool) -> RedisCacheEntry | None:
         """Retrieve a cache entry from Redis."""
         if skip_cache:
             return None
 
         config = get_redis_config()
         client = config.get_client(is_async=False)
-        key = cls._make_key(function_id, cache_key)
+        key = cls._make_key(cache_key)
         try:
             return cls._handle_get_result(client.get(key))  # type: ignore[arg-type]
         except Exception as exc:
@@ -110,11 +108,11 @@ class RedisStorage:
             return None
 
     @classmethod
-    async def aset(cls, function_id: str, cache_key: str, result: Any, ttl: Number | None):
+    async def aset(cls, cache_key: str, result: Any, ttl: Number | None):
         """Store a result in Redis cache (async)."""
         config = get_redis_config()
         client = config.get_client(is_async=True)
-        key, data, expiry_ms = cls._prepare_set(function_id, cache_key, result, ttl)
+        key, data, expiry_ms = cls._prepare_set(cache_key, result, ttl)
         try:
             if expiry_ms is None:
                 await client.set(key, data)
@@ -125,14 +123,14 @@ class RedisStorage:
             cls._handle_error(exc, "aset")
 
     @classmethod
-    async def aget(cls, function_id: str, cache_key: str, skip_cache: bool) -> RedisCacheEntry | None:
+    async def aget(cls, cache_key: str, skip_cache: bool) -> RedisCacheEntry | None:
         """Retrieve a cache entry from Redis (async)."""
         if skip_cache:
             return None
 
         config = get_redis_config()
         client = config.get_client(is_async=True)
-        key = cls._make_key(function_id, cache_key)
+        key = cls._make_key(cache_key)
         try:
             return cls._handle_get_result(await client.get(key))  # type: ignore[arg-type]
         except Exception as exc:
