@@ -1,4 +1,6 @@
 import contextlib
+import hashlib
+import pickle
 import time
 from inspect import Signature
 from typing import Any
@@ -53,6 +55,11 @@ class MemoryStorage:
         cls._CACHE.clear()
 
     @classmethod
+    def _cache_key_fingerprint(cls, value: object) -> str:
+        payload = pickle.dumps(value, protocol=pickle.HIGHEST_PROTOCOL)
+        return hashlib.blake2b(payload, digest_size=16).hexdigest()
+
+    @classmethod
     def create_cache_key(
         cls,
         function_signature: Signature,
@@ -63,11 +70,11 @@ class MemoryStorage:
     ) -> str:
         if not cache_key_func:
             items = tuple(cls.iter_arguments(function_signature, args, kwargs, ignore_fields))
-            return str(hash(items))
+            return cls._cache_key_fingerprint(items)
 
         cache_key = cache_key_func(args, kwargs)
         try:
-            return str(hash(cache_key))
+            return cls._cache_key_fingerprint(cache_key)
         except TypeError as exc:
             raise ValueError(
                 "Cache key function must return a hashable cache key - be careful with mutable types (list, dict, set) and non built-in types"
