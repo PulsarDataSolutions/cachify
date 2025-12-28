@@ -1,11 +1,8 @@
 import contextlib
-import hashlib
-import pickle
 import time
-from inspect import Signature
 from typing import Any
 
-from caching.types import CacheEntry, CacheKeyFunction, Number
+from caching.types import CacheEntry, Number
 
 _CACHE_CLEAR_INTERVAL_SECONDS: int = 10
 
@@ -53,52 +50,3 @@ class MemoryStorage:
     @classmethod
     def clear(cls):
         cls._CACHE.clear()
-
-    @classmethod
-    def _cache_key_fingerprint(cls, value: object) -> str:
-        payload = pickle.dumps(value, protocol=pickle.HIGHEST_PROTOCOL)
-        return hashlib.blake2b(payload, digest_size=16).hexdigest()
-
-    @classmethod
-    def create_cache_key(
-        cls,
-        function_signature: Signature,
-        cache_key_func: CacheKeyFunction | None,
-        ignore_fields: tuple[str, ...],
-        args: tuple,
-        kwargs: dict,
-    ) -> str:
-        if not cache_key_func:
-            items = tuple(cls.iter_arguments(function_signature, args, kwargs, ignore_fields))
-            return cls._cache_key_fingerprint(items)
-
-        cache_key = cache_key_func(args, kwargs)
-        try:
-            return cls._cache_key_fingerprint(cache_key)
-        except TypeError as exc:
-            raise ValueError(
-                "Cache key function must return a hashable cache key - be careful with mutable types (list, dict, set) and non built-in types"
-            ) from exc
-
-    @classmethod
-    def iter_arguments(cls, function_signature: Signature, args: tuple, kwargs: dict, ignore_fields: tuple[str, ...]):
-        bound = function_signature.bind_partial(*args, **kwargs)
-        bound.apply_defaults()
-
-        for name, value in bound.arguments.items():
-            if name in ignore_fields:
-                continue
-
-            param = function_signature.parameters[name]
-
-            # Positional variable arguments can just be yielded like so
-            if param.kind == param.VAR_POSITIONAL:
-                yield from value
-                continue
-
-            # Keyword variable arguments need to be unpacked from .items()
-            if param.kind == param.VAR_KEYWORD:
-                yield from value.items()
-                continue
-
-            yield name, value

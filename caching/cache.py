@@ -2,9 +2,9 @@ import functools
 import inspect
 from typing import Any, Callable, cast
 
-from caching.storage.memory_storage import MemoryStorage
-from caching.types import CacheConfig, CacheKeyFunction, F, Number
 from caching.features.never_die import register_never_die_function
+from caching.types import CacheConfig, CacheKeyFunction, F, Number
+from caching.utils.arguments import create_cache_key
 from caching.utils.functions import get_function_id
 
 
@@ -22,7 +22,7 @@ def _async_decorator(
     @functools.wraps(function)
     async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
         skip_cache = kwargs.pop("skip_cache", False)
-        cache_key = MemoryStorage.create_cache_key(function_signature, cache_key_func, ignore_fields, args, kwargs)
+        cache_key = create_cache_key(function_signature, cache_key_func, ignore_fields, args, kwargs)
 
         if never_die:
             register_never_die_function(function, ttl, args, kwargs, cache_key_func, ignore_fields, config)
@@ -55,7 +55,7 @@ def _sync_decorator(
     @functools.wraps(function)
     def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
         skip_cache = kwargs.pop("skip_cache", False)
-        cache_key = MemoryStorage.create_cache_key(function_signature, cache_key_func, ignore_fields, args, kwargs)
+        cache_key = create_cache_key(function_signature, cache_key_func, ignore_fields, args, kwargs)
 
         if never_die:
             register_never_die_function(function, ttl, args, kwargs, cache_key_func, ignore_fields, config)

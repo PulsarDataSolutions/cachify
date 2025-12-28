@@ -9,8 +9,8 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from caching.config import logger
-from caching.storage.memory_storage import MemoryStorage
 from caching.types import CacheConfig, CacheKeyFunction, Number
+from caching.utils.arguments import create_cache_key
 from caching.utils.functions import get_function_id
 
 _NEVER_DIE_THREAD: threading.Thread | None = None
@@ -46,7 +46,7 @@ class NeverDieCacheEntry:
     @functools.cached_property
     def cache_key(self) -> str:
         function_signature = inspect.signature(self.function)
-        return MemoryStorage.create_cache_key(
+        return create_cache_key(
             function_signature,
             self.cache_key_func,
             self.ignore_fields,
