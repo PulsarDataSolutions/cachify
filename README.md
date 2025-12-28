@@ -6,7 +6,7 @@ A simple and robust caching library for Python functions, supporting both synchr
 
 - Cache function results based on function ID and arguments
 - Supports both synchronous and asynchronous functions
-- Thread-safe locking to prevent duplicate calculations
+- Thread-safe locking to prevent duplicate cached function calls
 - Configurable Time-To-Live (TTL) for cached items
 - "Never Die" mode for functions that should keep cache refreshed automatically
 - Skip cache functionality to force fresh function execution while updating cache
@@ -54,7 +54,7 @@ from caching import setup_redis_config, rcache
 # Configure Redis (call once at startup)
 setup_redis_config(
     sync_client=redis.from_url("redis://localhost:6379/0"),
-    key_prefix="myapp",       # default: "cache", prefix searchable on redis "PREFIX:*"
+    key_prefix="myapp",       # default: "key_prefix", prefix searchable on redis "PREFIX:*"
     lock_timeout=10,          # default: 10, maximum lock lifetime in seconds
     on_error="silent",        # "silent" (default) or "raise" in case of redis errors
 )
@@ -89,7 +89,7 @@ def critical_operation(data_id: str):
 
 1. When a function with `never_die=True` is first called, the result is cached
 2. A background thread monitors all `never_die` functions
-3. Before the cache expires (at 90% of TTL), the function is automatically called again
+3. On cache expiration (TTL), the function is automatically called again
 4. The cache is updated with the new result
 5. If the refresh operation fails, the existing cached value is preserved
 6. Clients always get fast response times by reading from cache
@@ -98,7 +98,7 @@ def critical_operation(data_id: str):
 
 - Cache is always "warm" and ready to serve
 - No user request ever has to wait for the expensive operation
-- If backend services go down temporarily, the last successful result is still available
+- If a dependency service from the cached function goes down temporarily, the last successful result is still available
 - Perfect for critical operations where latency must be minimized
 
 ### Skip Cache

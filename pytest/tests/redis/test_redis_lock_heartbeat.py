@@ -5,7 +5,7 @@ import pytest
 import redis
 import redis.asyncio
 
-from caching import redis_cache, setup_redis_config
+from caching import redis_cache, setup_redis_config, DEFAULT_KEY_PREFIX
 from caching.redis.lock import _AsyncHeartbeatManager, _SyncHeartbeatManager
 
 
@@ -171,7 +171,7 @@ async def test_lock_extension_timing(setup_redis_short_lock: redis.Redis):
         for _ in range(3):
             await asyncio.sleep(0.8)
             # Find the lock key
-            for key in redis_client.scan_iter("cache:lock:*"):
+            for key in redis_client.scan_iter(f"{DEFAULT_KEY_PREFIX}:lock:*"):
                 ttl = redis_client.ttl(key)
                 if ttl > 0:
                     ttl_samples.append(ttl)

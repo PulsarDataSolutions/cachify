@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 OnErrorType = Literal["silent", "raise"]
 
-DEFAULT_KEY_PREFIX = "cache"
+DEFAULT_KEY_PREFIX = "caching"
 DEFAULT_LOCK_TIMEOUT = 10
 
 
