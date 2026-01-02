@@ -1,4 +1,4 @@
 ﻿import logging
 
-logger = logging.getLogger("caching")
+logger = logging.getLogger("cachify")
 logger.addHandler(logging.NullHandler())

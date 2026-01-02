@@ -1,14 +1,14 @@
 [tool.poetry]
 name = "cachify"
 version = "0.1.0"
-description = "A simple caching library with sync/async support, Memory and Redis backend"
+description = "A simple cache library with sync/async support, Memory and Redis backend"
 license = "MIT"
 readme = "README.md"
 packages = [{ include = "cachify" }]
 authors = ["dynalz <git@pulsar.finance>"]
-repository = "https://github.com/PulsarDataSolutions/caching"
-homepage = "https://github.com/PulsarDataSolutions/caching"
-keywords = ["cache", "caching", "redis", "async", "decorator", "memoization"]
+repository = "https://github.com/PulsarDataSolutions/cachify"
+homepage = "https://github.com/PulsarDataSolutions/cachify"
+keywords = ["cachify", "cache", "caching", "redis", "async", "decorator", "memoization"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

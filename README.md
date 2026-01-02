@@ -1,4 +1,4 @@
-# Python Caching Library
+# Python Cachify Library
 
 A simple and robust caching library for Python functions, supporting both synchronous and asynchronous code.
 
@@ -10,14 +10,14 @@ A simple and robust caching library for Python functions, supporting both synchr
 - Configurable Time-To-Live (TTL) for cached items
 - "Never Die" mode for functions that should keep cache refreshed automatically
 - Skip cache functionality to force fresh function execution while updating cache
-- Redis caching for distributed caching across multiple processes/machines
+- Redis cache for distributed caching across multiple processes/machines
 
 ## Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/PulsarDefi/caching.git
-cd caching
+git clone https://github.com/PulsarDefi/cachify.git
+cd cachify
 
 # Install the package
 poetry install
