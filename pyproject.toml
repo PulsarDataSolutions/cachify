@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cachify"
-version = "0.1.0"
+version = "0.0.0"
 description = "A simple cache library with sync/async support, Memory and Redis backend"
 license = "MIT"
 readme = "README.md"
@@ -22,6 +22,12 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+style = "pep440"
+pattern = "^v?(?P<base>\\d+\\.\\d+\\.\\d+)"
+
 [tool.poetry.scripts]
 shell = "scripts.shell:shell"
 
@@ -41,8 +47,8 @@ asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.ruff]
 line-length = 120
