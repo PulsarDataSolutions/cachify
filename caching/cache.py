@@ -20,9 +20,6 @@ def _async_decorator(
         skip_cache = kwargs.pop("skip_cache", False)
         cache_key = create_cache_key(function, cache_key_func, ignore_fields, args, kwargs)
 
-        if never_die:
-            register_never_die_function(function, ttl, args, kwargs, cache_key_func, ignore_fields, config)
-
         if cache_entry := await config.storage.aget(cache_key, skip_cache):
             return cache_entry.result
 
@@ -32,6 +29,10 @@ def _async_decorator(
 
             result = await function(*args, **kwargs)
             await config.storage.aset(cache_key, result, None if never_die else ttl)
+
+            if never_die:
+                register_never_die_function(function, ttl, args, kwargs, cache_key_func, ignore_fields, config)
+
             return result
 
     return cast(F, async_wrapper)
@@ -50,9 +51,6 @@ def _sync_decorator(
         skip_cache = kwargs.pop("skip_cache", False)
         cache_key = create_cache_key(function, cache_key_func, ignore_fields, args, kwargs)
 
-        if never_die:
-            register_never_die_function(function, ttl, args, kwargs, cache_key_func, ignore_fields, config)
-
         if cache_entry := config.storage.get(cache_key, skip_cache):
             return cache_entry.result
 
@@ -62,6 +60,10 @@ def _sync_decorator(
 
             result = function(*args, **kwargs)
             config.storage.set(cache_key, result, None if never_die else ttl)
+
+            if never_die:
+                register_never_die_function(function, ttl, args, kwargs, cache_key_func, ignore_fields, config)
+
             return result
 
     return cast(F, sync_wrapper)

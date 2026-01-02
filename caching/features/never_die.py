@@ -70,34 +70,34 @@ class NeverDieCacheEntry:
 
 def _run_sync_function_and_cache(entry: NeverDieCacheEntry):
     """Run a function and cache its result"""
-    with entry.config.sync_lock(entry.cache_key):
-        try:
+    try:
+        with entry.config.sync_lock(entry.cache_key):
             result = entry.function(*entry.args, **entry.kwargs)
             entry.config.storage.set(entry.cache_key, result, None)
             entry.reset()
-        except BaseException:
-            entry.revive()
-            logger.debug(
-                f"Exception caching function with never_die",
-                extra={"function": entry.function.__qualname__},
-                exc_info=True,
-            )
+    except BaseException:
+        entry.revive()
+        logger.debug(
+            "Exception caching function with never_die",
+            extra={"function": entry.function.__qualname__},
+            exc_info=True,
+        )
 
 
 async def _run_async_function_and_cache(entry: NeverDieCacheEntry):
     """Run a function and cache its result"""
-    async with entry.config.async_lock(entry.cache_key):
-        try:
+    try:
+        async with entry.config.async_lock(entry.cache_key):
             result = await entry.function(*entry.args, **entry.kwargs)
             await entry.config.storage.aset(entry.cache_key, result, None)
             entry.reset()
-        except BaseException:
-            entry.revive()
-            logger.debug(
-                f"Exception caching function with never_die",
-                extra={"function": entry.function.__qualname__},
-                exc_info=True,
-            )
+    except BaseException:
+        entry.revive()
+        logger.debug(
+            "Exception caching function with never_die",
+            extra={"function": entry.function.__qualname__},
+            exc_info=True,
+        )
 
 
 def _cache_is_being_set(entry: NeverDieCacheEntry) -> bool:

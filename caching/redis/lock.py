@@ -202,12 +202,10 @@ class RedisLockManager:
                 _SyncHeartbeatManager.register(lock.name, lock, config.lock_timeout)
                 yield
         finally:
-            if not acquired:
-                return
-
-            _SyncHeartbeatManager.unregister(lock.name)
-            with contextlib.suppress(Exception):
-                lock.release()
+            if acquired:
+                _SyncHeartbeatManager.unregister(lock.name)
+                with contextlib.suppress(Exception):
+                    lock.release()
 
     @classmethod
     @asynccontextmanager
@@ -225,12 +223,10 @@ class RedisLockManager:
         try:
             acquired = await lock.acquire()
             if acquired:
-                _AsyncHeartbeatManager.register(lock.name, lock, config.lock_timeout)
+                _AsyncHeartbeatManager.register(lock.name, lock, config.lock_timeout)  # type: ignore
                 yield
         finally:
-            if not acquired:
-                return
-
-            _AsyncHeartbeatManager.unregister(lock.name)
-            with contextlib.suppress(Exception):
-                await lock.release()
+            if acquired:
+                _AsyncHeartbeatManager.unregister(lock.name)  # type: ignore
+                with contextlib.suppress(Exception):
+                    await lock.release()
