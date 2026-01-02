@@ -2,8 +2,8 @@ import time
 from itertools import count
 from typing_extensions import Unpack
 
-from caching.memory_cache import cache
-from caching.types import CacheKwargs
+from cachify.memory_cache import cache
+from cachify.types import CacheKwargs
 
 TTL = 0.1
 

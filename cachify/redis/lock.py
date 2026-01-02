@@ -9,8 +9,8 @@ from typing import AsyncIterator, Iterator, Literal, overload
 from redis.lock import Lock
 from redis.asyncio.lock import Lock as AsyncLock
 
-from caching.config import logger
-from caching.redis.config import get_redis_config
+from cachify.config import logger
+from cachify.redis.config import get_redis_config
 
 HEARTBEAT_INTERVAL = 1
 

@@ -1,6 +1,6 @@
 import pytest
 
-from caching import clear_never_die_registry
+from cachify import clear_never_die_registry
 
 
 @pytest.fixture(autouse=True)

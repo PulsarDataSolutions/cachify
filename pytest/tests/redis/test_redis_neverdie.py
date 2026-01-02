@@ -3,7 +3,7 @@ import pytest
 import redis
 import redis.asyncio
 
-from caching import redis_cache
+from cachify import redis_cache
 
 
 def test_neverdie_sync_redis(setup_sync_redis: redis.Redis):

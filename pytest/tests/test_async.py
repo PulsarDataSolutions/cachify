@@ -1,10 +1,10 @@
-import pytest
+﻿import pytest
 import asyncio
 from typing import Any
 from collections.abc import Callable, Coroutine
 
-from caching.storage.memory_storage import MemoryStorage
-from caching.memory_cache import cache
+from cachify.storage.memory_storage import MemoryStorage
+from cachify.memory_cache import cache
 
 TTL = 0.1
 

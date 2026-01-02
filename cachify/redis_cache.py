@@ -1,9 +1,9 @@
-from typing import Callable
+﻿from typing import Callable
 
-from caching.cache import base_cache
-from caching.redis.lock import RedisLockManager
-from caching.storage.redis_storage import RedisStorage
-from caching.types import CacheConfig, CacheKeyFunction, F, Number
+from cachify.cache import base_cache
+from cachify.redis.lock import RedisLockManager
+from cachify.storage.redis_storage import RedisStorage
+from cachify.types import CacheConfig, CacheKeyFunction, F, Number
 
 _REDIS_CONFIG = CacheConfig(
     storage=RedisStorage,

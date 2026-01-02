@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 import functools
 import inspect
 import threading
@@ -8,9 +8,9 @@ from concurrent.futures import Future as ConcurrentFuture
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from caching.config import logger
-from caching.types import CacheConfig, CacheKeyFunction, Number
-from caching.utils.arguments import create_cache_key
+from cachify.config import logger
+from cachify.types import CacheConfig, CacheKeyFunction, Number
+from cachify.utils.arguments import create_cache_key
 
 _NEVER_DIE_THREAD: threading.Thread | None = None
 _NEVER_DIE_LOCK: threading.Lock = threading.Lock()

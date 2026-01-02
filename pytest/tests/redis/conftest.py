@@ -4,7 +4,7 @@ import pytest_asyncio
 import redis
 import redis.asyncio as aioredis
 
-from caching import (
+from cachify import (
     DEFAULT_KEY_PREFIX,
     clear_never_die_registry,
     reset_redis_config,
@@ -43,7 +43,7 @@ async def async_redis_client():
 @pytest.fixture(autouse=True)
 def reset_config():
     """Reset Redis config and never_die registry before each test."""
-    from caching.redis.lock import _AsyncHeartbeatManager, _SyncHeartbeatManager
+    from cachify.redis.lock import _AsyncHeartbeatManager, _SyncHeartbeatManager
 
     clear_never_die_registry()
     reset_redis_config()

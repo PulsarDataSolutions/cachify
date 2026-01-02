@@ -1,8 +1,8 @@
-import time
+﻿import time
 import pytest
 import redis
 
-from caching import redis_cache
+from cachify import redis_cache
 
 
 def test_basic_sync_redis_caching(setup_sync_redis: redis.Redis):

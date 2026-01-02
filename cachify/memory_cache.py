@@ -1,10 +1,10 @@
 import threading
 from typing import Callable
 
-from caching.cache import base_cache
-from caching.storage.memory_storage import MemoryStorage
-from caching.types import CacheConfig, CacheKeyFunction, F, Number
-from caching.utils.locks import ASYNC_LOCKS, SYNC_LOCKS
+from cachify.cache import base_cache
+from cachify.storage.memory_storage import MemoryStorage
+from cachify.types import CacheConfig, CacheKeyFunction, F, Number
+from cachify.utils.locks import ASYNC_LOCKS, SYNC_LOCKS
 
 _CACHE_CLEAR_THREAD: threading.Thread | None = None
 _CACHE_CLEAR_LOCK: threading.Lock = threading.Lock()

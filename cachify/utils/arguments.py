@@ -5,8 +5,8 @@ from collections.abc import Callable, Generator
 from inspect import Signature
 from typing import Any
 
-from caching.types import CacheKeyFunction
-from caching.utils.functions import get_function_id
+from cachify.types import CacheKeyFunction
+from cachify.utils.functions import get_function_id
 
 
 def _cache_key_fingerprint(value: object) -> str:

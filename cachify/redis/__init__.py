@@ -1,4 +1,4 @@
-from caching.redis.config import (
+from cachify.redis.config import (
     DEFAULT_KEY_PREFIX,
     DEFAULT_LOCK_TIMEOUT,
     RedisConfig,
@@ -6,7 +6,7 @@ from caching.redis.config import (
     reset_redis_config,
     setup_redis_config,
 )
-from caching.redis.lock import RedisLockManager
+from cachify.redis.lock import RedisLockManager
 
 __all__ = [
     "DEFAULT_KEY_PREFIX",

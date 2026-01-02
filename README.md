@@ -28,7 +28,7 @@ poetry install
 ### Basic Usage
 
 ```python
-from caching import cache
+from cachify import cache
 
 # Cache function in sync functions
 @cache(ttl=60) # ttl in seconds
@@ -49,7 +49,7 @@ For distributed caching across multiple processes or machines, use `rcache`:
 
 ```python
 import redis
-from caching import setup_redis_config, rcache
+from cachify import setup_redis_config, rcache
 
 # Configure Redis (call once at startup)
 setup_redis_config(

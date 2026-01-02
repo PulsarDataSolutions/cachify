@@ -1,8 +1,8 @@
-import asyncio
+﻿import asyncio
 import pytest
 import redis.asyncio
 
-from caching import redis_cache
+from cachify import redis_cache
 
 
 @pytest.mark.asyncio

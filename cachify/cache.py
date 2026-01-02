@@ -2,9 +2,9 @@ import functools
 import inspect
 from typing import Any, Callable, cast
 
-from caching.features.never_die import register_never_die_function
-from caching.types import CacheConfig, CacheKeyFunction, F, Number
-from caching.utils.arguments import create_cache_key
+from cachify.features.never_die import register_never_die_function
+from cachify.types import CacheConfig, CacheKeyFunction, F, Number
+from cachify.utils.arguments import create_cache_key
 
 
 def _async_decorator(

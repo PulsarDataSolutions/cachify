@@ -1,6 +1,6 @@
-import time
+﻿import time
 
-from caching.memory_cache import cache
+from cachify.memory_cache import cache
 
 TTL = 0.1
 

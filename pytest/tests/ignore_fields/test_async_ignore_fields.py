@@ -2,7 +2,7 @@ import pytest
 from typing import Any
 from collections.abc import Callable, Coroutine
 
-from caching.memory_cache import cache
+from cachify.memory_cache import cache
 
 TTL = 1
 

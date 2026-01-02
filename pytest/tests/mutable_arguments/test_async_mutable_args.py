@@ -1,8 +1,8 @@
-import pytest
+﻿import pytest
 from collections.abc import Callable
 
-from caching.storage.memory_storage import MemoryStorage
-from caching.memory_cache import cache
+from cachify.storage.memory_storage import MemoryStorage
+from cachify.memory_cache import cache
 
 TTL = 0.1
 

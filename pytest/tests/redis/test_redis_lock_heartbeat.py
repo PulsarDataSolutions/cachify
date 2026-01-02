@@ -5,8 +5,8 @@ import pytest
 import redis
 import redis.asyncio
 
-from caching import redis_cache, setup_redis_config, DEFAULT_KEY_PREFIX
-from caching.redis.lock import _AsyncHeartbeatManager, _SyncHeartbeatManager
+from cachify import redis_cache, setup_redis_config, DEFAULT_KEY_PREFIX
+from cachify.redis.lock import _AsyncHeartbeatManager, _SyncHeartbeatManager
 
 
 @pytest.fixture

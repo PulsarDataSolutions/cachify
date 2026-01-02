@@ -2,7 +2,7 @@ import contextlib
 import time
 from typing import Any
 
-from caching.types import CacheEntry, Number
+from cachify.types import CacheEntry, Number
 
 _CACHE_CLEAR_INTERVAL_SECONDS: int = 10
 

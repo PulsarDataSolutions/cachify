@@ -1,9 +1,9 @@
 import inspect
 from typing import Callable
 
-from caching._async import async_decorator
-from caching._sync import sync_decorator
-from caching.types import CacheConfig, CacheKeyFunction, F, Number
+from cachify._async import async_decorator
+from cachify._sync import sync_decorator
+from cachify.types import CacheConfig, CacheKeyFunction, F, Number
 
 
 def create_cache_decorator(

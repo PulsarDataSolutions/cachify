@@ -2,9 +2,9 @@ import pickle
 import time
 from typing import Any, overload
 
-from caching.redis.config import get_redis_config
-from caching.config import logger
-from caching.types import CacheEntry, Number
+from cachify.redis.config import get_redis_config
+from cachify.config import logger
+from cachify.types import CacheEntry, Number
 
 
 class RedisCacheEntry(CacheEntry):

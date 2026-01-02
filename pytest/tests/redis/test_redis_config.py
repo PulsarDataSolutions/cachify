@@ -1,7 +1,7 @@
-import pytest
+﻿import pytest
 import redis
 
-from caching import reset_redis_config, setup_redis_config
+from cachify import reset_redis_config, setup_redis_config
 
 
 def test_setup_requires_at_least_one_client():
@@ -34,7 +34,7 @@ def test_invalid_on_error_value(sync_redis_client: redis.Redis):
 
 def test_config_values_are_stored(sync_redis_client: redis.Redis):
     """Test that config values are correctly stored."""
-    from caching import get_redis_config
+    from cachify import get_redis_config
 
     setup_redis_config(
         sync_client=sync_redis_client,
@@ -53,7 +53,7 @@ def test_config_values_are_stored(sync_redis_client: redis.Redis):
 
 def test_get_config_before_setup_raises():
     """Test that get_redis_config raises if not configured."""
-    from caching import get_redis_config
+    from cachify import get_redis_config
 
     with pytest.raises(RuntimeError, match="not configured"):
         get_redis_config()
@@ -61,7 +61,7 @@ def test_get_config_before_setup_raises():
 
 def test_unpicklable_object_raises_error(setup_sync_redis: redis.Redis):
     """Test that caching unpicklable objects raises a clear error."""
-    from caching import redis_cache
+    from cachify import redis_cache
 
     @redis_cache(ttl=60)
     def get_lambda():
