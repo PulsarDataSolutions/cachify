@@ -20,5 +20,4 @@ __all__ = [
     "reset_redis_config",
     "DEFAULT_KEY_PREFIX",
     "CacheKwargs",
-    "clear_never_die_registry",
 ]

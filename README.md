@@ -28,8 +28,14 @@ A simple and robust caching library for Python functions, supporting both synchr
 ## Installation
 
 ```bash
-# Adding to your project
+# Using pip
+pip install cachify
+
+# Using poetry
 poetry add cachify
+
+# Using uv
+uv add cachify
 ```
 
 ## Usage
@@ -40,16 +46,55 @@ poetry add cachify
 from cachify import cache
 
 # Cache function in sync functions
-@cache(ttl=60) # ttl in seconds
+@cache(ttl=60)  # ttl in seconds
 def expensive_calculation(a, b):
     # Some expensive operation
     return a + b
 
 # And async functions
-@cache(ttl=3600) # ttl in seconds
+@cache(ttl=3600)  # ttl in seconds
 async def another_calculation(url):
     # Some expensive IO call
     return await httpx.get(url).json()
+```
+
+### Decorator Parameters
+
+| Parameter        | Type              | Default | Description                                          |
+| ---------------- | ----------------- | ------- | ---------------------------------------------------- |
+| `ttl`            | `int \| float`    | `300`   | Time to live for cached items in seconds             |
+| `never_die`      | `bool`            | `False` | If True, cache refreshes automatically in background |
+| `cache_key_func` | `Callable`        | `None`  | Custom function to generate cache keys               |
+| `ignore_fields`  | `tuple[str, ...]` | `()`    | Function parameters to exclude from cache key        |
+
+### Custom Cache Key Function
+
+Use `cache_key_func` when you need custom control over how cache keys are generated:
+
+```python
+from cachify import cache
+
+def custom_key(args: tuple, kwargs: dict) -> str:
+    user_id = kwargs.get("user_id") or args[0]
+    return f"user:{user_id}"
+
+@cache(ttl=60, cache_key_func=custom_key)
+def get_user_profile(user_id: int):
+    return fetch_from_database(user_id)
+```
+
+### Ignore Fields
+
+Use `ignore_fields` to exclude specific parameters from the cache key. Useful when some arguments don't affect the result:
+
+```python
+from cachify import cache
+
+@cache(ttl=300, ignore_fields=("logger", "request_id"))
+def fetch_data(query: str, logger: Logger, request_id: str):
+    # Cache key only uses 'query', ignoring logger and request_id
+    logger.info(f"Fetching data for request {request_id}")
+    return database.execute(query)
 ```
 
 ### Redis Cache
@@ -78,7 +123,7 @@ import redis.asyncio as aredis
 setup_redis_config(async_client=aredis.from_url("redis://localhost:6379/0"))
 
 @rcache(ttl=300)
-def get_user_async(user_id: int) -> dict:
+async def get_user_async(user_id: int) -> dict:
     return await fetch_from_database(user_id)
 ```
 

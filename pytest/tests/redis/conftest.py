@@ -4,12 +4,8 @@ import pytest_asyncio
 import redis
 import redis.asyncio as aioredis
 
-from cachify import (
-    DEFAULT_KEY_PREFIX,
-    clear_never_die_registry,
-    reset_redis_config,
-    setup_redis_config,
-)
+from cachify import DEFAULT_KEY_PREFIX, reset_redis_config, setup_redis_config
+from cachify.features.never_die import clear_never_die_registry
 
 
 def get_redis_url() -> str:
