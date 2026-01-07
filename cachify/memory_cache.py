@@ -1,7 +1,7 @@
 import asyncio
 import threading
 from collections import defaultdict
-from typing import Callable
+from typing import Callable, Sequence
 
 from cachify.cache import base_cache
 from cachify.storage.memory_storage import MemoryStorage
@@ -34,7 +34,7 @@ def cache(
     ttl: Number = 300,
     never_die: bool = False,
     cache_key_func: CacheKeyFunction | None = None,
-    ignore_fields: tuple[str, ...] = (),
+    ignore_fields: Sequence[str] = (),
     no_self: bool = False,
 ) -> Callable[[F], F]:
     """In-memory cache decorator. See `base_cache` for full documentation."""

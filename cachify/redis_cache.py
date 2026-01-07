@@ -1,4 +1,4 @@
-﻿from typing import Callable
+﻿from typing import Callable, Sequence
 
 from cachify.cache import base_cache
 from cachify.redis.lock import RedisLockManager
@@ -16,7 +16,7 @@ def redis_cache(
     ttl: Number = 300,
     never_die: bool = False,
     cache_key_func: CacheKeyFunction | None = None,
-    ignore_fields: tuple[str, ...] = (),
+    ignore_fields: Sequence[str] = (),
     no_self: bool = False,
 ) -> Callable[[F], F]:
     """

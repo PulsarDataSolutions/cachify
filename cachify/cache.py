@@ -1,6 +1,6 @@
 import functools
 import inspect
-from typing import Any, Callable, cast
+from typing import Any, Callable, Sequence, cast
 
 from cachify.features.never_die import register_never_die_function
 from cachify.types import CacheConfig, CacheKeyFunction, F, Number
@@ -73,7 +73,7 @@ def base_cache(
     ttl: Number,
     never_die: bool,
     cache_key_func: CacheKeyFunction | None,
-    ignore_fields: tuple[str, ...],
+    ignore_fields: Sequence[str],
     no_self: bool,
     config: CacheConfig,
 ) -> Callable[[F], F]:
@@ -84,7 +84,7 @@ def base_cache(
         ttl: Time to live for cached items in seconds
         never_die: If True, the cache will never expire and will be recalculated based on the ttl
         cache_key_func: Custom cache key function, used for more complex cache scenarios
-        ignore_fields: Tuple of strings with the function params to ignore when creating the cache key
+        ignore_fields: Sequence of strings with the function params to ignore when creating the cache key
         no_self: if True, the first parameter (typically 'self' for methods) will be ignored when creating the cache key
         config: Cache configuration specifying storage, locks, and never_die registration
 
@@ -97,7 +97,7 @@ def base_cache(
         raise ValueError("Either cache_key_func or ignore_fields can be provided, but not both")
 
     def decorator(function: F) -> F:
-        ignore = ignore_fields
+        ignore = tuple(*ignore_fields)
         if no_self:
             ignore += function.__code__.co_varnames[:1]
 
