@@ -481,7 +481,7 @@ class TestUnpicklableArguments:
     class ReducePickleableObject:
         def __init__(self, value):
             self.value = value
-            self.callback = lambda: None  # Lambdas are not picklable
+            self.callback = lambda: None
 
         def __reduce__(self):
             return (self.__class__, (self.value,))
@@ -517,6 +517,27 @@ class TestUnpicklableArguments:
 
         result1 = await cached_func(self.ReducePickleableObject(10))
         result2 = await cached_func(self.ReducePickleableObject(10))
+
+        assert result1 == result2
+        assert call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_custom_object_with_no_self(self):
+        call_count = 0
+
+        class UnpickleableObject:
+            def __init__(self):
+                self.callback = lambda: None
+
+            @cache(ttl=TTL, no_self=True)
+            async def cached_method(self, value: int) -> int:
+                nonlocal call_count
+                call_count += 1
+                return call_count
+
+        obj = UnpickleableObject()
+        result1 = await obj.cached_method(42)
+        result2 = await obj.cached_method(42)
 
         assert result1 == result2
         assert call_count == 1

@@ -495,3 +495,23 @@ class TestUnpicklableArguments:
 
         assert result1 == result2
         assert call_count == 1
+
+    def test_custom_object_with_no_self(self):
+        call_count = 0
+
+        class UnpickleableObject:
+            def __init__(self):
+                self.callback = lambda: None
+
+            @cache(ttl=TTL, no_self=True)
+            def cached_method(self, value: int) -> int:
+                nonlocal call_count
+                call_count += 1
+                return call_count
+
+        obj = UnpickleableObject()
+        result1 = obj.cached_method(42)
+        result2 = obj.cached_method(42)
+
+        assert result1 == result2
+        assert call_count == 1
