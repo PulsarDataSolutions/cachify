@@ -19,27 +19,34 @@ def _process_isolated_fingerprint(value: Any) -> str:
         current = stack.pop()
         current_id = id(current)
 
-        # Avoid processing the same object multiple times
         if current_id in seen:
             continue
-        seen.add(current_id)
 
-        with suppress(TypeError):
-            result.update(hash(current).to_bytes(8, "big", signed=True))
+        with suppress(TypeError, AttributeError, pickle.PicklingError):
+            result.update(pickle.dumps(current, protocol=pickle.HIGHEST_PROTOCOL))
+            continue
+
+        # Handle code objects to differentiate different lambda functions
+        with suppress(AttributeError, TypeError):
+            result.update(current.__code__.co_code)
             continue
 
         if isinstance(current, Sequence):
+            seen.add(current_id)
             stack.extend(current)
             continue
 
         if isinstance(current, Set):
+            seen.add(current_id)
             stack.extend(sorted(current))
             continue
 
         if isinstance(current, Mapping):
+            seen.add(current_id)
             stack.extend(current.items())
             continue
 
+        # Last resort: use the id of the object
         result.update(current_id.to_bytes(8, "big", signed=True))
 
     return result.hexdigest()
