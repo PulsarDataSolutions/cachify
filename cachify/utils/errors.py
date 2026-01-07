@@ -1,0 +1,2 @@
+class CacheKeyError(ValueError):
+    pass

@@ -1,17 +1,12 @@
-import hashlib
 import inspect
-import pickle
 from collections.abc import Callable, Generator
 from inspect import Signature
 from typing import Any
 
 from cachify.types import CacheKeyFunction
+from cachify.utils.errors import CacheKeyError
 from cachify.utils.functions import get_function_id
-
-
-def _cache_key_fingerprint(value: object) -> str:
-    payload = pickle.dumps(value, protocol=pickle.HIGHEST_PROTOCOL)
-    return hashlib.blake2b(payload, digest_size=16).hexdigest()
+from cachify.utils.hash import object_hash
 
 
 def _iter_arguments(
@@ -54,12 +49,12 @@ def create_cache_key(
     if not cache_key_func:
         function_signature = inspect.signature(function)
         items = tuple(_iter_arguments(function_signature, args, kwargs, ignore_fields))
-        return f"{function_id}:{_cache_key_fingerprint(items)}"
+        return f"{function_id}:{object_hash(items)}"
 
     cache_key = cache_key_func(args, kwargs)
     try:
-        return f"{function_id}:{_cache_key_fingerprint(cache_key)}"
+        return f"{function_id}:{object_hash(cache_key)}"
     except TypeError as exc:
-        raise ValueError(
+        raise CacheKeyError(
             "Cache key function must return a hashable cache key - be careful with mutable types (list, dict, set) and non built-in types"
         ) from exc
