@@ -35,7 +35,8 @@ def cache(
     never_die: bool = False,
     cache_key_func: CacheKeyFunction | None = None,
     ignore_fields: tuple[str, ...] = (),
+    no_self: bool = False,
 ) -> Callable[[F], F]:
     """In-memory cache decorator. See `base_cache` for full documentation."""
     _start_cache_clear_thread()
-    return base_cache(ttl, never_die, cache_key_func, ignore_fields, _MEMORY_CONFIG)
+    return base_cache(ttl, never_die, cache_key_func, ignore_fields, no_self, _MEMORY_CONFIG)
