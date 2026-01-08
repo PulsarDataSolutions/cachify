@@ -1,4 +1,4 @@
-﻿from typing import Callable
+﻿from typing import Callable, Sequence
 
 from cachify.cache import base_cache
 from cachify.redis.lock import RedisLockManager
@@ -16,7 +16,8 @@ def redis_cache(
     ttl: Number = 300,
     never_die: bool = False,
     cache_key_func: CacheKeyFunction | None = None,
-    ignore_fields: tuple[str, ...] = (),
+    ignore_fields: Sequence[str] = (),
+    no_self: bool = False,
 ) -> Callable[[F], F]:
     """
     Redis cache decorator. See `base_cache` for full documentation.
@@ -24,4 +25,4 @@ def redis_cache(
     Requires setup_redis_config() to be called before use.
     Uses Redis for distributed caching across multiple processes/machines.
     """
-    return base_cache(ttl, never_die, cache_key_func, ignore_fields, _REDIS_CONFIG)
+    return base_cache(ttl, never_die, cache_key_func, ignore_fields, no_self, _REDIS_CONFIG)

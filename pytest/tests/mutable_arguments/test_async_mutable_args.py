@@ -1,8 +1,10 @@
-﻿import pytest
+﻿import socket
 from collections.abc import Callable
 
-from cachify.storage.memory_storage import MemoryStorage
+import pytest
 from cachify.memory_cache import cache
+from cachify.storage.memory_storage import MemoryStorage
+from cachify.utils.errors import CacheKeyError
 
 TTL = 0.1
 
@@ -465,5 +467,77 @@ class TestMutationAfterCaching:
         result2 = await cached_func([1, 2])
 
         # Should still hit cache with [1, 2]
+        assert result1 == result2
+        assert call_count == 1
+
+
+class TestUnpicklableArguments:
+    """Tests for caching behavior with unpicklable arguments."""
+
+    @pytest.fixture(autouse=True)
+    def clear_cache(self):
+        MemoryStorage.clear()
+
+    class ReducePickleableObject:
+        def __init__(self, value):
+            self.value = value
+            self.callback = lambda: None
+
+        def __reduce__(self):
+            return (self.__class__, (self.value,))
+
+    @pytest.mark.asyncio
+    async def test_function_argument_raises_type_error(self):
+        @cache(ttl=TTL)
+        async def cached_func(func: Callable) -> int:
+            return 42
+
+        with pytest.raises(CacheKeyError):
+            await cached_func(lambda: None)
+
+    @pytest.mark.asyncio
+    async def test_open_file_argument_raises_type_error(self):
+        @cache(ttl=TTL)
+        async def cached_func(sock: socket.socket) -> int:
+            return 42
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            with pytest.raises(CacheKeyError):
+                await cached_func(s)
+
+    @pytest.mark.asyncio
+    async def test_custom_object_argument(self):
+        call_count = 0
+
+        @cache(ttl=TTL)
+        async def cached_func(obj: TestUnpicklableArguments.ReducePickleableObject) -> int:
+            nonlocal call_count
+            call_count += 1
+            return call_count
+
+        result1 = await cached_func(self.ReducePickleableObject(10))
+        result2 = await cached_func(self.ReducePickleableObject(10))
+
+        assert result1 == result2
+        assert call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_custom_object_with_no_self(self):
+        call_count = 0
+
+        class UnpickleableObject:
+            def __init__(self):
+                self.callback = lambda: None
+
+            @cache(ttl=TTL, no_self=True)
+            async def cached_method(self, value: int) -> int:
+                nonlocal call_count
+                call_count += 1
+                return call_count
+
+        obj = UnpickleableObject()
+        result1 = await obj.cached_method(42)
+        result2 = await obj.cached_method(42)
+
         assert result1 == result2
         assert call_count == 1
