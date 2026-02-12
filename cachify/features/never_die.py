@@ -12,6 +12,7 @@ from cachify.config import logger
 from cachify.types import CacheConfig, CacheKeyFunction, Number
 from cachify.utils.arguments import create_cache_key
 
+_REGISTERED_NEVER_DIE_KEYS: set[str] = set()
 _NEVER_DIE_THREAD: threading.Thread | None = None
 _NEVER_DIE_LOCK: threading.Lock = threading.Lock()
 _NEVER_DIE_REGISTRY: list["NeverDieCacheEntry"] = []
@@ -177,6 +178,22 @@ def _start_never_die_thread():
 
 
 def register_never_die_function(
+    cache_key: str,
+    function: Callable[..., Any],
+    ttl: Number,
+    args: tuple,
+    kwargs: dict,
+    cache_key_func: CacheKeyFunction | None,
+    ignore_fields: tuple[str, ...],
+    config: CacheConfig,
+):
+    if cache_key in _REGISTERED_NEVER_DIE_KEYS:
+        return
+    _REGISTERED_NEVER_DIE_KEYS.add(cache_key)
+    _register_never_die_function(function, ttl, args, kwargs, cache_key_func, ignore_fields, config)
+
+
+def _register_never_die_function(
     function: Callable[..., Any],
     ttl: Number,
     args: tuple,
