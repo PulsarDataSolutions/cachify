@@ -1,9 +1,11 @@
+import asyncio
 import time
 import pytest
 import redis
 import redis.asyncio
 
 from cachify import redis_cache
+from cachify.features.never_die import _NEVER_DIE_REGISTRY, clear_never_die_registry
 
 
 def test_neverdie_sync_redis(setup_sync_redis: redis.Redis):
@@ -66,8 +68,6 @@ async def test_neverdie_async_redis(
     setup_both_redis: tuple[redis.Redis, redis.asyncio.Redis],
 ):
     """Test never_die with async functions in Redis."""
-    import asyncio
-
     call_count = 0
 
     @redis_cache(ttl=0.1, never_die=True)
@@ -97,8 +97,6 @@ async def test_neverdie_async_exception_redis(
     setup_both_redis: tuple[redis.Redis, redis.asyncio.Redis],
 ):
     """Test never_die continues serving stale data on async function exception."""
-    import asyncio
-
     call_count = 0
     should_fail = False
 
@@ -124,3 +122,56 @@ async def test_neverdie_async_exception_redis(
     # Should still return stale cached value
     result2 = await get_value(5)
     assert result2 == 10  # Still returns cached result
+
+
+def test_neverdie_registers_on_cache_hit_sync(setup_sync_redis: redis.Redis):
+    call_count = 0
+
+    @redis_cache(ttl=0.1, never_die=True)
+    def get_value(x: int) -> int:
+        nonlocal call_count
+        call_count += 1
+        return x * 2
+
+    get_value(5)
+    assert call_count == 1
+    assert len(_NEVER_DIE_REGISTRY) == 1
+
+    clear_never_die_registry()
+    assert len(_NEVER_DIE_REGISTRY) == 0
+
+    result = get_value(5)
+    assert result == 10
+    assert call_count == 1
+    assert len(_NEVER_DIE_REGISTRY) == 1
+
+    time.sleep(0.5)
+    assert call_count > 1
+
+
+@pytest.mark.asyncio
+async def test_neverdie_registers_on_cache_hit_async(
+    setup_both_redis: tuple[redis.Redis, redis.asyncio.Redis],
+):
+    call_count = 0
+
+    @redis_cache(ttl=0.1, never_die=True)
+    async def get_value(x: int) -> int:
+        nonlocal call_count
+        call_count += 1
+        return x * 2
+
+    await get_value(5)
+    assert call_count == 1
+    assert len(_NEVER_DIE_REGISTRY) == 1
+
+    clear_never_die_registry()
+    assert len(_NEVER_DIE_REGISTRY) == 0
+
+    result = await get_value(5)
+    assert result == 10
+    assert call_count == 1
+    assert len(_NEVER_DIE_REGISTRY) == 1
+
+    await asyncio.sleep(0.5)
+    assert call_count > 1

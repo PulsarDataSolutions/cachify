@@ -1,6 +1,7 @@
 ﻿import time
 
 from cachify.memory_cache import cache
+from cachify.features.never_die import _NEVER_DIE_REGISTRY, clear_never_die_registry
 
 TTL = 0.1
 
@@ -64,3 +65,28 @@ def test_neverdie_exception():
     # At this point, the function got stuck at returning just 3
     assert neverdie_fn() == 2
     assert neverdie_counter > 2
+
+
+def test_neverdie_registers_on_cache_hit():
+    call_count = 0
+
+    @cache(ttl=TTL, never_die=True)
+    def get_value() -> int:
+        nonlocal call_count
+        call_count += 1
+        return call_count
+
+    get_value()
+    assert call_count == 1
+    assert len(_NEVER_DIE_REGISTRY) == 1
+
+    clear_never_die_registry()
+    assert len(_NEVER_DIE_REGISTRY) == 0
+
+    result = get_value()
+    assert result == 1
+    assert call_count == 1
+    assert len(_NEVER_DIE_REGISTRY) == 1
+
+    time.sleep(TTL * 4)
+    assert call_count > 1

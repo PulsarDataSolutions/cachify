@@ -234,3 +234,4 @@ def clear_never_die_registry():
         _NEVER_DIE_REGISTRY.clear()
         _NEVER_DIE_CACHE_THREADS.clear()
         _NEVER_DIE_CACHE_FUTURES.clear()
+        _REGISTERED_NEVER_DIE_KEYS.clear()
