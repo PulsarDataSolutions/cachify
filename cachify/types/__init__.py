@@ -32,6 +32,9 @@ class CacheEntry:
 
         return self.time() > self.expires_at
 
+    def is_fresh(self, ttl: float) -> bool:
+        return self.time() - self.cached_at < ttl
+
 
 @dataclass(frozen=True, slots=True)
 class CacheConfig:
@@ -48,6 +51,8 @@ class CacheEntryProtocol(Protocol):
     result: Any
 
     def is_expired(self) -> bool: ...
+
+    def is_fresh(self, ttl: float) -> bool: ...
 
 
 class CacheStorage(Protocol):

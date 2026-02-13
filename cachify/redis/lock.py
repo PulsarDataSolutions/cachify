@@ -185,7 +185,7 @@ class RedisLockManager:
 
     @classmethod
     @contextmanager
-    def sync_lock(cls, cache_key: str, blocking: bool = True) -> Iterator[None]:
+    def sync_lock(cls, cache_key: str) -> Iterator[None]:
         """
         Acquire a distributed lock for sync operations.
 
@@ -197,7 +197,7 @@ class RedisLockManager:
         acquired = False
 
         try:
-            acquired = lock.acquire(blocking=blocking)
+            acquired = lock.acquire()
             if acquired:
                 _SyncHeartbeatManager.register(lock.name, lock, config.lock_timeout)
                 yield
@@ -209,7 +209,7 @@ class RedisLockManager:
 
     @classmethod
     @asynccontextmanager
-    async def async_lock(cls, cache_key: str, blocking: bool = True) -> AsyncIterator[None]:
+    async def async_lock(cls, cache_key: str) -> AsyncIterator[None]:
         """
         Acquire a distributed lock for async operations.
 
@@ -221,7 +221,7 @@ class RedisLockManager:
         acquired = False
 
         try:
-            acquired = await lock.acquire(blocking=blocking)
+            acquired = await lock.acquire()
             if acquired:
                 _AsyncHeartbeatManager.register(lock.name, lock, config.lock_timeout)  # type: ignore
                 yield
