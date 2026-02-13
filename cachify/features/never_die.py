@@ -70,9 +70,18 @@ class NeverDieCacheEntry:
 
 
 def _run_sync_function_and_cache(entry: NeverDieCacheEntry):
-    """Run a function and cache its result"""
     try:
+        cached = entry.config.storage.get(entry.cache_key, False)
+        if cached and cached.is_fresh(entry.ttl):
+            entry.reset()
+            return
+
         with entry.config.sync_lock(entry.cache_key):
+            cached = entry.config.storage.get(entry.cache_key, False)
+            if cached and cached.is_fresh(entry.ttl):
+                entry.reset()
+                return
+
             result = entry.function(*entry.args, **entry.kwargs)
             entry.config.storage.set(entry.cache_key, result, None)
             entry.reset()
@@ -86,9 +95,18 @@ def _run_sync_function_and_cache(entry: NeverDieCacheEntry):
 
 
 async def _run_async_function_and_cache(entry: NeverDieCacheEntry):
-    """Run a function and cache its result"""
     try:
+        cached = await entry.config.storage.aget(entry.cache_key, False)
+        if cached and cached.is_fresh(entry.ttl):
+            entry.reset()
+            return
+
         async with entry.config.async_lock(entry.cache_key):
+            cached = await entry.config.storage.aget(entry.cache_key, False)
+            if cached and cached.is_fresh(entry.ttl):
+                entry.reset()
+                return
+
             result = await entry.function(*entry.args, **entry.kwargs)
             await entry.config.storage.aset(entry.cache_key, result, None)
             entry.reset()
