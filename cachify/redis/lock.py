@@ -102,6 +102,7 @@ class _AsyncHeartbeatManager:
                 if not active.should_extend():
                     continue
                 if not await active.extend():
+                    cls._locks.pop(key, None)
                     logger.warning(f"Failed to extend lock, it may have expired", extra={"lock_key": key})
 
 
@@ -120,7 +121,8 @@ class _SyncHeartbeatManager:
 
     @classmethod
     def unregister(cls, key: str):
-        cls._locks.pop(key, None)
+        with cls._state_lock:
+            cls._locks.pop(key, None)
 
     @classmethod
     def reset(cls):
@@ -149,6 +151,8 @@ class _SyncHeartbeatManager:
                 if not active.should_extend():
                     continue
                 if not active.extend():
+                    with cls._state_lock:
+                        cls._locks.pop(key, None)
                     logger.warning(f"Failed to extend lock, it may have expired", extra={"lock_key": key})
 
 
