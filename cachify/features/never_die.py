@@ -99,6 +99,8 @@ def _run_sync_function_and_cache(entry: NeverDieCacheEntry):
             extra={"function": entry.function.__qualname__},
             exc_info=True,
         )
+    finally:
+        _NEVER_DIE_CACHE_THREADS.pop(entry.cache_key, None)
 
 
 async def _run_async_function_and_cache(entry: NeverDieCacheEntry):
@@ -132,21 +134,6 @@ def _cache_is_being_set(entry: NeverDieCacheEntry) -> bool:
     return entry.cache_key in _NEVER_DIE_CACHE_THREADS and _NEVER_DIE_CACHE_THREADS[entry.cache_key].is_alive()
 
 
-def _clear_dead_futures():
-    """Clear dead futures from the cache future registry"""
-    for cache_key, thread in list(_NEVER_DIE_CACHE_FUTURES.items()):
-        if thread.done():
-            del _NEVER_DIE_CACHE_FUTURES[cache_key]
-
-
-def _clear_dead_threads():
-    """Clear dead threads from the cache thread registry"""
-    for cache_key, thread in list(_NEVER_DIE_CACHE_THREADS.items()):
-        if thread.is_alive():
-            continue
-        del _NEVER_DIE_CACHE_THREADS[cache_key]
-
-
 def _push_to_heap(entry: NeverDieCacheEntry):
     heapq.heappush(_NEVER_DIE_HEAP, (entry._expires_at, entry))
 
@@ -157,8 +144,8 @@ def _process_expired_entry(entry: NeverDieCacheEntry):
 
     if not entry.loop:
         thread = threading.Thread(target=_run_sync_function_and_cache, args=(entry,), daemon=True)
-        thread.start()
         _NEVER_DIE_CACHE_THREADS[entry.cache_key] = thread
+        thread.start()
         return
 
     if entry.loop.is_closed():
@@ -181,6 +168,7 @@ def _process_expired_entry(entry: NeverDieCacheEntry):
         )
         return
 
+    future.add_done_callback(lambda _: _NEVER_DIE_CACHE_FUTURES.pop(entry.cache_key, None))
     _NEVER_DIE_CACHE_FUTURES[entry.cache_key] = future
 
 
@@ -196,8 +184,6 @@ def _refresh_never_die_caches():
                 _process_expired_entry(entry)
         finally:
             time.sleep(_REFRESH_INTERVAL_SECONDS)
-            _clear_dead_futures()
-            _clear_dead_threads()
 
 
 def _start_never_die_thread():
