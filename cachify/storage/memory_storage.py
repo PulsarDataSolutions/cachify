@@ -19,10 +19,10 @@ class MemoryStorage:
     def clear_expired_cached_items(cls):
         """Clear expired cached items from the cache."""
         while True:
-            with contextlib.suppress(Exception):
-                for key, entry in list(cls._CACHE.items()):
-                    if entry.is_expired():
-                        del cls._CACHE[key]
+            with contextlib.suppress(RuntimeError):
+                expired_keys = [key for key, entry in cls._CACHE.items() if entry.is_expired()]
+                for key in expired_keys:
+                    cls._CACHE.pop(key, None)
 
             time.sleep(_CACHE_CLEAR_INTERVAL_SECONDS)
 

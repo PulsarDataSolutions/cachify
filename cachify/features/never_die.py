@@ -144,7 +144,7 @@ def _refresh_never_die_caches():
     """Background thread function that periodically refreshes never_die cache entries"""
     while True:
         try:
-            for entry in list(_NEVER_DIE_REGISTRY):
+            for entry in _NEVER_DIE_REGISTRY:  # this is safe cuz we only append and never del
                 if not entry.is_expired():
                     continue
 
@@ -182,6 +182,7 @@ def _refresh_never_die_caches():
             time.sleep(_REFRESH_INTERVAL_SECONDS)
             _clear_dead_futures()
             _clear_dead_threads()
+            continue
 
 
 def _start_never_die_thread():
