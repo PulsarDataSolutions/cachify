@@ -14,11 +14,12 @@ def _async_decorator(
     cache_key_func: CacheKeyFunction | None,
     ignore_fields: tuple[str, ...],
     config: CacheConfig,
+    function_signature: inspect.Signature | None = None,
 ) -> F:
     @functools.wraps(function)
     async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
         skip_cache = kwargs.pop("skip_cache", False)
-        cache_key = create_cache_key(function, cache_key_func, ignore_fields, args, kwargs)
+        cache_key = create_cache_key(function, cache_key_func, ignore_fields, args, kwargs, function_signature)
 
         if never_die:
             register_never_die_function(cache_key, function, ttl, args, kwargs, cache_key_func, ignore_fields, config)
@@ -45,11 +46,12 @@ def _sync_decorator(
     cache_key_func: CacheKeyFunction | None,
     ignore_fields: tuple[str, ...],
     config: CacheConfig,
+    function_signature: inspect.Signature | None = None,
 ) -> F:
     @functools.wraps(function)
     def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
         skip_cache = kwargs.pop("skip_cache", False)
-        cache_key = create_cache_key(function, cache_key_func, ignore_fields, args, kwargs)
+        cache_key = create_cache_key(function, cache_key_func, ignore_fields, args, kwargs, function_signature)
 
         if never_die:
             register_never_die_function(cache_key, function, ttl, args, kwargs, cache_key_func, ignore_fields, config)
@@ -103,6 +105,8 @@ def base_cache(
         if no_self:
             ignore += function.__code__.co_varnames[:1]
 
+        function_signature = inspect.signature(function) if not cache_key_func else None
+
         if inspect.iscoroutinefunction(function):
             return _async_decorator(
                 function=function,
@@ -111,6 +115,7 @@ def base_cache(
                 cache_key_func=cache_key_func,
                 ignore_fields=ignore,
                 config=config,
+                function_signature=function_signature,
             )
         return _sync_decorator(
             function=function,
@@ -119,6 +124,7 @@ def base_cache(
             cache_key_func=cache_key_func,
             ignore_fields=ignore,
             config=config,
+            function_signature=function_signature,
         )
 
     return decorator

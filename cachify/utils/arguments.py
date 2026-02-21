@@ -43,11 +43,12 @@ def create_cache_key(
     ignore_fields: tuple[str, ...],
     args: tuple,
     kwargs: dict,
+    function_signature: Signature | None = None,
 ) -> str:
     function_id = get_function_id(function)
 
     if not cache_key_func:
-        function_signature = inspect.signature(function)
+        function_signature = function_signature or inspect.signature(function)
         items = tuple(_iter_arguments(function_signature, args, kwargs, ignore_fields))
         return f"{function_id}:{object_hash(items)}"
 
