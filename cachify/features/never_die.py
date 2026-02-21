@@ -1,5 +1,6 @@
 ﻿import asyncio
 import functools
+import heapq
 import inspect
 import threading
 import time
@@ -18,6 +19,7 @@ _NEVER_DIE_LOCK: threading.Lock = threading.Lock()
 _NEVER_DIE_REGISTRY: list["NeverDieCacheEntry"] = []
 _NEVER_DIE_CACHE_THREADS: dict[str, threading.Thread] = {}
 _NEVER_DIE_CACHE_FUTURES: dict[str, ConcurrentFuture] = {}
+_NEVER_DIE_HEAP: list[tuple[float, "NeverDieCacheEntry"]] = []
 
 _MAX_BACKOFF: int = 10
 _BACKOFF_MULTIPLIER: float = 1.25
@@ -57,16 +59,21 @@ class NeverDieCacheEntry:
     def __hash__(self) -> int:
         return hash(self.cache_key)
 
+    def __lt__(self, other: "NeverDieCacheEntry") -> bool:
+        return self._expires_at < other._expires_at
+
     def is_expired(self) -> bool:
         return time.monotonic() > self._expires_at
 
     def reset(self):
         self._backoff = 1
         self._expires_at = time.monotonic() + self.ttl
+        _push_to_heap(self)
 
     def revive(self):
         self._backoff = min(self._backoff * _BACKOFF_MULTIPLIER, _MAX_BACKOFF)
         self._expires_at = time.monotonic() + self.ttl * self._backoff
+        _push_to_heap(self)
 
 
 def _run_sync_function_and_cache(entry: NeverDieCacheEntry):
@@ -140,49 +147,57 @@ def _clear_dead_threads():
         del _NEVER_DIE_CACHE_THREADS[cache_key]
 
 
+def _push_to_heap(entry: NeverDieCacheEntry):
+    heapq.heappush(_NEVER_DIE_HEAP, (entry._expires_at, entry))
+
+
+def _process_expired_entry(entry: NeverDieCacheEntry):
+    if _cache_is_being_set(entry):
+        return
+
+    if not entry.loop:
+        thread = threading.Thread(target=_run_sync_function_and_cache, args=(entry,), daemon=True)
+        thread.start()
+        _NEVER_DIE_CACHE_THREADS[entry.cache_key] = thread
+        return
+
+    if entry.loop.is_closed():
+        logger.debug(
+            "Loop is closed, skipping future creation",
+            extra={"function": entry.function.__qualname__},
+            exc_info=True,
+        )
+        return
+
+    coroutine = _run_async_function_and_cache(entry)
+    try:
+        future = asyncio.run_coroutine_threadsafe(coroutine, entry.loop)
+    except RuntimeError:
+        coroutine.close()
+        logger.debug(
+            "Loop is closed, skipping future creation",
+            extra={"function": entry.function.__qualname__},
+            exc_info=True,
+        )
+        return
+
+    _NEVER_DIE_CACHE_FUTURES[entry.cache_key] = future
+
+
 def _refresh_never_die_caches():
     """Background thread function that periodically refreshes never_die cache entries"""
     while True:
         try:
-            for entry in _NEVER_DIE_REGISTRY:  # this is safe cuz we only append and never del
-                if not entry.is_expired():
+            now = time.monotonic()
+            while _NEVER_DIE_HEAP and _NEVER_DIE_HEAP[0][0] <= now:
+                snapshot_expires_at, entry = heapq.heappop(_NEVER_DIE_HEAP)
+                if snapshot_expires_at != entry._expires_at:  # lazy deletion
                     continue
-
-                if _cache_is_being_set(entry):
-                    continue
-
-                if not entry.loop:  # sync
-                    thread = threading.Thread(target=_run_sync_function_and_cache, args=(entry,), daemon=True)
-                    thread.start()
-                    _NEVER_DIE_CACHE_THREADS[entry.cache_key] = thread
-                    continue
-
-                if entry.loop.is_closed():
-                    logger.debug(
-                        "Loop is closed, skipping future creation",
-                        extra={"function": entry.function.__qualname__},
-                        exc_info=True,
-                    )
-                    continue
-
-                coroutine = _run_async_function_and_cache(entry)
-                try:
-                    future = asyncio.run_coroutine_threadsafe(coroutine, entry.loop)
-                except RuntimeError:
-                    coroutine.close()
-                    logger.debug(
-                        "Loop is closed, skipping future creation",
-                        extra={"function": entry.function.__qualname__},
-                        exc_info=True,
-                    )
-                    continue
-
-                _NEVER_DIE_CACHE_FUTURES[entry.cache_key] = future
+                _process_expired_entry(entry)
         finally:
             time.sleep(_REFRESH_INTERVAL_SECONDS)
             _clear_dead_futures()
             _clear_dead_threads()
-            continue
 
 
 def _start_never_die_thread():
@@ -238,6 +253,7 @@ def _register_never_die_function(
     with _NEVER_DIE_LOCK:
         if entry not in _NEVER_DIE_REGISTRY:
             _NEVER_DIE_REGISTRY.append(entry)
+            _push_to_heap(entry)
 
     _start_never_die_thread()
 
@@ -250,6 +266,7 @@ def clear_never_die_registry():
     accessing resources that have been cleaned up.
     """
     with _NEVER_DIE_LOCK:
+        _NEVER_DIE_HEAP.clear()
         _NEVER_DIE_REGISTRY.clear()
         _NEVER_DIE_CACHE_THREADS.clear()
         _NEVER_DIE_CACHE_FUTURES.clear()
