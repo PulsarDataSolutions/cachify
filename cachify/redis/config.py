@@ -14,7 +14,7 @@ AsyncRedisClient: TypeAlias = "AsyncRedis | AsyncRedisCluster"
 
 OnErrorType = Literal["silent", "raise"]
 
-DEFAULT_KEY_PREFIX = "{cachify}"
+DEFAULT_KEY_PREFIX = "cachify"
 DEFAULT_LOCK_TIMEOUT = 10
 
 
